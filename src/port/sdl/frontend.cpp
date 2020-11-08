@@ -1232,6 +1232,36 @@ static char* Analog_Mode_show()
 	return buf;
 }
 
+static int MenuToggleCombo_alter(u32 keys)
+{
+	if (keys & KEY_RIGHT) {
+		if (Config.MenuToggleCombo < 2) Config.MenuToggleCombo++;
+	} else if (keys & KEY_LEFT) {
+		if (Config.MenuToggleCombo > 0) Config.MenuToggleCombo--;
+	}
+	return 0;
+}
+
+static void MenuToggleCombo_hint()
+{
+	port_printf(6 * 8, 10 * 8, "POWER button also opens menu");
+}
+
+static char* MenuToggleCombo_show()
+{
+	static char buf[16] = "\0";
+	switch (Config.MenuToggleCombo) {
+	case 0: sprintf(buf, "L3+R3");
+		break;
+	case 1: sprintf(buf, "SELECT+START");
+		break;
+	case 2: sprintf(buf, "None");
+		break;
+	}
+
+	return buf;
+}
+
 static char *RCntFix_show()
 {
 	static char buf[16] = "\0";
@@ -1324,6 +1354,7 @@ static int settings_defaults()
 	Config.SlowBoot = 0;
 	Config.AnalogArrow = 0;
 	Config.AnalogMode = 2;
+	Config.MenuToggleCombo = 0;
 	Config.RCntFix = 0;
 	Config.VSyncWA = 0;
 #ifdef PSXREC
@@ -1348,6 +1379,7 @@ static MENUITEM gui_SettingsItems[] = {
 	{(char *)"Skip BIOS logos    ", NULL, &SlowBoot_alter, &SlowBoot_show, &SlowBoot_hint},
 	{(char *)"Map L-stick to Dpad", NULL, &AnalogArrow_alter, &AnalogArrow_show, &AnalogArrow_hint},
 	{(char *)"Analog Mode        ", NULL, &Analog_Mode_alter, &Analog_Mode_show, &Analog_Mode_hint},
+	{(char *)"Menu Toggle Combo  ", NULL, &MenuToggleCombo_alter, &MenuToggleCombo_show, &MenuToggleCombo_hint},
 	{(char *)"RCntFix            ", NULL, &RCntFix_alter, &RCntFix_show, &RCntFix_hint},
 	{(char *)"VSyncWA            ", NULL, &VSyncWA_alter, &VSyncWA_show, &VSyncWA_hint},
 	{(char *)"Memory card Slot1  ", NULL, &McdSlot1_alter, &McdSlot1_show, NULL},

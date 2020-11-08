@@ -277,6 +277,9 @@ void config_load()
 		} else if (!strcmp(line, "Analog_Mode")) {
 			sscanf(arg, "%d", &value);
 			Config.AnalogMode = value;
+		} else if (!strcmp(line, "MenuToggleCombo")) {
+			sscanf(arg, "%d", &value);
+			Config.MenuToggleCombo = value;
 		} else if (!strcmp(line, "RCntFix")) {
 			sscanf(arg, "%d", &value);
 			Config.RCntFix = value;
@@ -287,16 +290,16 @@ void config_load()
 			sscanf(arg, "%d", &value);
 			Config.Cpu = value;
 		} else if (!strcmp(line, "PsxType")) {
-            sscanf(arg, "%d", &value);
-            Config.PsxType = value;
-        } else if (!strcmp(line, "McdSlot1")) {
-            sscanf(arg, "%d", &value);
-            Config.McdSlot1 = value;
-        } else if (!strcmp(line, "McdSlot2")) {
-            sscanf(arg, "%d", &value);
-            Config.McdSlot2 = value;
-        } else if (!strcmp(line, "SpuIrq")) {
-            sscanf(arg, "%d", &value);
+			sscanf(arg, "%d", &value);
+			Config.PsxType = value;
+		} else if (!strcmp(line, "McdSlot1")) {
+			sscanf(arg, "%d", &value);
+			Config.McdSlot1 = value;
+		} else if (!strcmp(line, "McdSlot2")) {
+			sscanf(arg, "%d", &value);
+			Config.McdSlot2 = value;
+		} else if (!strcmp(line, "SpuIrq")) {
+			sscanf(arg, "%d", &value);
 			Config.SpuIrq = value;
 		} else if (!strcmp(line, "SyncAudio")) {
 			sscanf(arg, "%d", &value);
@@ -442,6 +445,7 @@ void config_save()
 		   "SlowBoot %d\n"
 		   "AnalogArrow %d\n"
 		   "Analog_Mode %d\n"
+		   "MenuToggleCombo %d\n"
 		   "RCntFix %d\n"
 		   "VSyncWA %d\n"
 		   "Cpu %d\n"
@@ -457,7 +461,7 @@ void config_save()
 		   "FrameSkip %d\n"
 		   "VideoScaling %d\n",
 		   CONFIG_VERSION, Config.Xa, Config.Mdec, Config.PsxAuto, Config.Cdda,
-		   Config.HLE, Config.SlowBoot, Config.AnalogArrow, Config.AnalogMode,
+		   Config.HLE, Config.SlowBoot, Config.AnalogArrow, Config.AnalogMode, Config.MenuToggleCombo,
 		   Config.RCntFix, Config.VSyncWA, Config.Cpu, Config.PsxType,
 		   Config.McdSlot1, Config.McdSlot2, Config.SpuIrq, Config.SyncAudio,
 		   Config.SpuUpdateFreq, Config.ForcedXAUpdates, Config.ShowFps,
@@ -739,6 +743,22 @@ void pad_update()
 		if ((pad1_buttons & (1 << DKEY_RIGHT)) && (analog1 & ANALOG_RIGHT)) {
 			pad1_buttons &= ~(1 << DKEY_RIGHT);
 		}
+	}
+
+	/* Handle menu toggle button combinations */
+	switch (Config.MenuToggleCombo) {
+	case 0: /* L3 + R3 */
+		if (!(pad1_buttons & ((1 << DKEY_L3) | (1 << DKEY_R3)))) {
+			popup_menu = true;
+		}
+		break;
+	case 1: /* SELECT + START */
+		if (!(pad1_buttons & ((1 << DKEY_SELECT) | (1 << DKEY_START)))) {
+			popup_menu = true;
+		}
+		break;
+	default:
+		break;
 	}
 
 	// popup main menu
