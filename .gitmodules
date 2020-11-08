@@ -1,0 +1,3 @@
+[submodule "src/libShake"]
+	path = src/libShake
+	url = https://github.com/jdgleaver/libShake.git

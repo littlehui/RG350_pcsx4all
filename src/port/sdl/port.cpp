@@ -31,7 +31,7 @@
 #endif
 
 #ifdef RUMBLE
-#include <shake.h>
+#include "libShake/include/shake.h"
 Shake_Device *device;
 int id_shake_level[16];
 #endif
