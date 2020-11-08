@@ -1350,7 +1350,7 @@ static int settings_defaults()
 	Config.HLE = 1;
 	Config.SlowBoot = 0;
 	Config.AnalogArrow = 0;
-	Config.AnalogMode = 2;
+	Config.AnalogMode = 3;
 	Config.MenuToggleCombo = 0;
 	Config.RCntFix = 0;
 	Config.VSyncWA = 0;
