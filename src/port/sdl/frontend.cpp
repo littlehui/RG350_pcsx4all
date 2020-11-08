@@ -1198,13 +1198,10 @@ static char* AnalogArrow_show()
 extern void Set_Controller_Mode();
 static int Analog_Mode_alter(u32 keys)
 {
-	
 	if (keys & KEY_RIGHT) {
-		Config.AnalogMode++;
-		if (Config.AnalogMode > 3) Config.AnalogMode = 3;
+		if (Config.AnalogMode < 3) Config.AnalogMode++;
 	} else if (keys & KEY_LEFT) {
-		Config.AnalogMode--;
-		if (Config.AnalogMode < 1) Config.AnalogMode = 0;
+		if (Config.AnalogMode > 0) Config.AnalogMode--;
 	}
 	Set_Controller_Mode();
 	return 0;
