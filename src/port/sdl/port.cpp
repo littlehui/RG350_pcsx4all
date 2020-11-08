@@ -72,33 +72,20 @@ int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 480;
 static bool pcsx4all_initted = false;
 static bool emu_running = false;
 
-#ifdef GCW_ZERO
-static bool last_keep_aspect = false;
-#endif
-
 void config_load();
 void config_save();
 void update_window_size(int w, int h, bool ntsc_fix);
 
-static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
-
 #ifdef GCW_ZERO
 
-static inline bool get_keep_aspect_ratio() {
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "rb");
-	if (!f) return false;
-	char c;
-	fread(&c, 1, 1, f);
-	fclose(f);
-	return c == 'Y';
-}
+#define DINGUX_KEEP_ASPECT_FILE "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio"
 
-static inline void set_keep_aspect_ratio(bool n) {
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
-	if (!f) return;
-	char c = n ? 'Y' : 'N';
-	fwrite(&c, 1, 1, f);
-	fclose(f);
+void set_keep_aspect_ratio(bool n) {
+	FILE *keep_aspect_file = fopen(DINGUX_KEEP_ASPECT_FILE, "wb");
+	if (keep_aspect_file) {
+		fputs(n ? "1" : "0", keep_aspect_file);
+		fclose(keep_aspect_file);
+	}
 }
 
 #endif
@@ -112,7 +99,10 @@ static void pcsx4all_exit(void)
 	config_save();
 
 #ifdef GCW_ZERO
-	set_keep_aspect_ratio(last_keep_aspect);
+	/* It is good manners to leave IPU scaling in
+	 * the default 'keep aspect' state when quitting
+	 * an application */
+	set_keep_aspect_ratio(true);
 #endif
 
 	if (SDL_MUSTLOCK(screen))
@@ -205,10 +195,6 @@ void config_load()
 	char config[MAXPATHLEN];
 	char line[MAXPATHLEN + 8 + 1];
 	int lineNum = 0;
-
-#ifdef GCW_ZERO
-	last_keep_aspect = get_keep_aspect_ratio();
-#endif
 
 	sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
 	f = fopen(config, "r");
@@ -328,6 +314,9 @@ void config_load()
 		} else if (!strcmp(line, "VideoScaling")) {
 			sscanf(arg, "%d", &value);
 			Config.VideoScaling = value;
+		} else if (!strcmp(line, "VideoHwKeepAspect")) {
+			sscanf(arg, "%d", &value);
+			Config.VideoHwKeepAspect = value;
 		}
 #ifdef SPU_PCSXREARMED
 		else if (!strcmp(line, "SpuUseInterpolation")) {
@@ -411,12 +400,6 @@ void config_load()
 			gpu_unai_config_ext.ntsc_fix = value;
 		}
 #endif
-#ifdef GCW_ZERO
-		else if (!strcmp(line, "keep_aspect_ratio")) {
-			sscanf(arg, "%d", &value);
-			set_keep_aspect_ratio(value != 0);
-		}
-#endif
 	}
 
 	fclose(f);
@@ -459,13 +442,14 @@ void config_save()
 		   "ShowFps %d\n"
 		   "FrameLimit %d\n"
 		   "FrameSkip %d\n"
-		   "VideoScaling %d\n",
+		   "VideoScaling %d\n"
+		   "VideoHwKeepAspect %d\n",
 		   CONFIG_VERSION, Config.Xa, Config.Mdec, Config.PsxAuto, Config.Cdda,
 		   Config.HLE, Config.SlowBoot, Config.AnalogArrow, Config.AnalogMode, Config.MenuToggleCombo,
 		   Config.RCntFix, Config.VSyncWA, Config.Cpu, Config.PsxType,
 		   Config.McdSlot1, Config.McdSlot2, Config.SpuIrq, Config.SyncAudio,
 		   Config.SpuUpdateFreq, Config.ForcedXAUpdates, Config.ShowFps,
-		   Config.FrameLimit, Config.FrameSkip, Config.VideoScaling);
+		   Config.FrameLimit, Config.FrameSkip, Config.VideoScaling, Config.VideoHwKeepAspect);
 
 #ifdef SPU_PCSXREARMED
 	fprintf(f, "SpuUseInterpolation %d\n", spu_config.iUseInterpolation);
@@ -492,11 +476,6 @@ void config_save()
 		   gpu_unai_config_ext.blending,
 		   gpu_unai_config_ext.dithering,
 		   gpu_unai_config_ext.ntsc_fix);
-#endif
-
-#ifdef GCW_ZERO
-	fprintf(f, "keep_aspect_ratio %d\n",
-		   get_keep_aspect_ratio() ? 1 : 0);
 #endif
 
 	if (Config.LastDir[0]) {
@@ -1032,6 +1011,8 @@ int main (int argc, char **argv)
 	Config.ShowFps=0;    // 0=don't show FPS
 	Config.FrameLimit = true;
 	Config.FrameSkip = FRAMESKIP_OFF;
+	Config.VideoScaling = 0;
+	Config.VideoHwKeepAspect = true;
 
 	//zear - Added option to store the last visited directory.
 	strncpy(Config.LastDir, home, MAXPATHLEN); /* Defaults to home directory. */
@@ -1123,6 +1104,11 @@ int main (int argc, char **argv)
 	config_load();
 	// Check if LastDir exists.
 	probe_lastdir();
+
+#ifdef GCW_ZERO
+	/* Apply hardware scaling 'keep aspect' setting */
+	set_keep_aspect_ratio(Config.VideoHwKeepAspect);
+#endif
 
 	// command line options
 	bool param_parse_error = 0;

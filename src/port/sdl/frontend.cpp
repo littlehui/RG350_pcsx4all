@@ -1486,13 +1486,45 @@ static char *videoscaling_show() {
 static void videoscaling_hint() {
 	switch(Config.VideoScaling) {
 	case 0:
-		port_printf(4 * 8, 10 * 8, "Hardware, POWER+A to switch aspect");
+		port_printf(4 * 8, 10 * 8, "Hardware scaling (fast)");
 		break;
 	case 1:
-		port_printf(7 * 8, 10 * 8, "Nearest filter");
+		port_printf(4 * 8, 10 * 8, "Software nearest-neighbour");
 		break;
 	}
 }
+
+#ifdef GCW_ZERO
+
+extern void set_keep_aspect_ratio(bool n);
+
+static int VideoHwKeepAspect_alter(u32 keys)
+{
+	boolean last_keep_aspect = Config.VideoHwKeepAspect;
+	if (keys & KEY_RIGHT) {
+		if (Config.VideoHwKeepAspect == false) Config.VideoHwKeepAspect = true;
+	} else if (keys & KEY_LEFT) {
+		if (Config.VideoHwKeepAspect == true) Config.VideoHwKeepAspect = false;
+	}
+	if (Config.VideoHwKeepAspect != last_keep_aspect) {
+		set_keep_aspect_ratio(Config.VideoHwKeepAspect);
+	}
+	return 0;
+}
+
+static char *VideoHwKeepAspect_show()
+{
+	static char buf[16] = "\0";
+	sprintf(buf, "%s", Config.VideoHwKeepAspect == true ? "on" : "off");
+	return buf;
+}
+
+static void VideoHwKeepAspect_hint() {
+	port_printf(4 * 8, 10 * 8, "Keep pixel aspect ratio (hardware)");
+}
+
+#endif //GCW_ZERO
+
 #endif //USE_GPULIB
 
 #ifdef GPU_UNAI
@@ -1644,6 +1676,8 @@ static int gpu_settings_defaults()
 	Config.ShowFps = 0;
 	Config.FrameLimit = true;
 	Config.FrameSkip = FRAMESKIP_OFF;
+	Config.VideoScaling = 0;
+	Config.VideoHwKeepAspect = true;
 
 #ifdef GPU_UNAI
 #ifndef USE_GPULIB
@@ -1667,7 +1701,10 @@ static MENUITEM gui_GPUSettingsItems[] = {
 #ifdef USE_GPULIB
 	/* Only working with gpulib */
 	{(char *)"Frame skip           ", NULL, &frameskip_alter, &frameskip_show, NULL},
-	{(char *)"Video Scaling        ", NULL, &videoscaling_alter, &videoscaling_show, videoscaling_hint},
+	{(char *)"Video Scaling        ", NULL, &videoscaling_alter, &videoscaling_show, &videoscaling_hint},
+#ifdef GCW_ZERO
+	{(char *)"Keep Aspect (HW)     ", NULL, &VideoHwKeepAspect_alter, &VideoHwKeepAspect_show, &VideoHwKeepAspect_hint},
+#endif
 #endif
 #ifdef GPU_UNAI
 	{(char *)"NTSC Resolution Fix  ", NULL, &ntsc_fix_alter, &ntsc_fix_show, NULL},

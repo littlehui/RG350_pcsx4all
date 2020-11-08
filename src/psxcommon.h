@@ -168,6 +168,11 @@ typedef struct {
 	s8      FrameSkip;	// -1: AUTO  0: OFF  1-3: FIXED
 	s8      VideoScaling; // 0: Hardware  1: Software Nearest
 
+	/* When using 'Hardware' video scaling:
+	 * true:  Keep aspect (PAR)
+	 * false: Stretch to fill screen */
+	boolean VideoHwKeepAspect;
+
 	// Options for performance monitor
 	boolean PerfmonConsoleOutput;
 	boolean PerfmonDetailedStats;
