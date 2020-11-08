@@ -22,10 +22,12 @@ SPU   = spu_pcsxrearmed
 RECOMPILER = mips
 
 RM     = rm -f
-MD     = mkdir
-CC     = mipsel-linux-gcc
-CXX    = mipsel-linux-g++
-LD     = mipsel-linux-g++
+MD     = mkdir -p
+
+TOOLCHAIN_DIR := /opt/gcw0-toolchain/usr/bin
+CC     = $(TOOLCHAIN_DIR)/mipsel-linux-gcc
+CXX    = $(TOOLCHAIN_DIR)/mipsel-linux-g++
+LD     = $(TOOLCHAIN_DIR)/mipsel-linux-g++
 
 SYSROOT     := $(shell $(CC) --print-sysroot)
 SDL_CONFIG  := $(SYSROOT)/usr/bin/sdl-config

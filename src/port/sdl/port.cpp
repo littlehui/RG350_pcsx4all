@@ -57,6 +57,14 @@ enum {
 	DKEY_TOTAL
 };
 
+/* Hack to enable compilation with official
+ * (old) GCW0 toolchain */
+#if defined(GCW_ZERO) && defined(USE_BGR15)
+#ifndef SDL_SWIZZLEBGR
+#define SDL_SWIZZLEBGR	0x00000040
+#endif
+#endif
+
 static SDL_Surface *screen;
 unsigned short *SCREEN;
 int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 480;
