@@ -34,6 +34,7 @@
 // Credit goes to Notaz / PCSX Rearmed, senquack
 
 #include "cdrom.h"
+#include "cdriso.h"
 #include "plugin_lib.h"
 #include "ppf.h"
 #include "psxdma.h"
@@ -318,6 +319,17 @@ void cdrLidSeekInterrupt()
 		else if (!(stat.Status & STATUS_SHELLOPEN)) {
 			// closed now
 			CheckCdrom();
+
+			/* If we are using per-disk memory cards, reload
+			 * them (unless this is a multi-cd image) */
+			if (cdrIsoMultidiskCount == 1) {
+				if (Config.McdSlot1 == 0) {
+					update_memcards(1);
+				}
+				if (Config.McdSlot2 == 0) {
+					update_memcards(2);
+				}
+			}
 
 			// cdr.StatP STATUS_SHELLOPEN is "sticky"
 			// and is only cleared by CdlNop

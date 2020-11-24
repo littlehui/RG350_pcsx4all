@@ -834,8 +834,29 @@ const char *GetMemcardPath(int slot) {
 }
 
 void update_memcards(int load_mcd) {
-	sprintf(McdPath1, "%s/mcd%03d.mcr", memcardsdir, (int) Config.McdSlot1);
-	sprintf(McdPath2, "%s/mcd%03d.mcr", memcardsdir, (int) Config.McdSlot2);
+
+	if (Config.McdSlot1 == 0) {
+		if (CdromId[0] == '\0') {
+			/* Fallback */
+			sprintf(McdPath1, "%s/%s", memcardsdir, "card1.mcd");
+		} else {
+			sprintf(McdPath1, "%s/%s.1.mcr", memcardsdir, CdromId);
+		}
+	} else {
+		sprintf(McdPath1, "%s/mcd%03d.mcr", memcardsdir, (int)Config.McdSlot1);
+	}
+
+	if (Config.McdSlot2 == 0) {
+		if (CdromId[0] == '\0') {
+			/* Fallback */
+			sprintf(McdPath2, "%s/%s", memcardsdir, "card2.mcd");
+		} else {
+			sprintf(McdPath2, "%s/%s.2.mcr", memcardsdir, CdromId);
+		}
+	} else {
+		sprintf(McdPath2, "%s/mcd%03d.mcr", memcardsdir, (int)Config.McdSlot2);
+	}
+
 	if (load_mcd & 1)
 		LoadMcd(MCD1, McdPath1); //Memcard 1
 	if (load_mcd & 2)
@@ -972,8 +993,8 @@ int main (int argc, char **argv)
 	setup_paths();
 
 	// PCSX
-	Config.McdSlot1 = 1;
-	Config.McdSlot2 = 2;
+	Config.McdSlot1 = 0;
+	Config.McdSlot2 = 1;
 	update_memcards(0);
 	strcpy(Config.PatchesDir, patchesdir);
 	strcpy(Config.BiosDir, biosdir);
@@ -1517,6 +1538,13 @@ int main (int argc, char **argv)
 		psxReset();
 	}
 
+	/* If we are using per-disk memory cards, load
+	 * them now */
+	if ((Config.McdSlot1 == 0) || (Config.McdSlot2 == 0)) {
+		update_memcards(0);
+		LoadMcd(MCD1, (char*)GetMemcardPath(1)); //Memcard 1
+		LoadMcd(MCD2, (char*)GetMemcardPath(2)); //Memcard 2
+	}
 
 	Rumble_Init();
 	joy_init();

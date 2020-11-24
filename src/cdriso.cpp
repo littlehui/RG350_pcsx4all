@@ -1409,7 +1409,7 @@ long CDR_open(void) {
 		return -1;
 	}
 
-	printf("Loaded CD Image: %s", GetIsoFile());
+	printf("Loaded CD Image: %s\n", GetIsoFile());
 
 	cddaBigEndian = FALSE;
 	subChanMixed = FALSE;

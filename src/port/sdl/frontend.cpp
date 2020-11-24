@@ -1299,12 +1299,12 @@ static int McdSlot1_alter(u32 keys)
 	int slot = Config.McdSlot1;
 	if (keys & KEY_RIGHT)
 	{
-		if (++slot > 15) slot = 1;
+		if (++slot > 15) slot = 0;
 	}
 	else
 	if (keys & KEY_LEFT)
 	{
-		if (--slot < 1) slot = 15;
+		if (--slot < 0) slot = 15;
 	}
 	Config.McdSlot1 = slot;
 	update_memcards(1);
@@ -1313,8 +1313,16 @@ static int McdSlot1_alter(u32 keys)
 
 static char *McdSlot1_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "mcd%03d.mcr", (int)Config.McdSlot1);
+	static char buf[32] = "\0";
+	if (Config.McdSlot1 == 0) {
+		if (CdromId[0] == '\0') {
+			strcpy(buf, "per-disk");
+		} else {
+			sprintf(buf, "%s.1", CdromId);
+		}
+	} else {
+		sprintf(buf, "mcd%03d.mcr", (int)Config.McdSlot1);
+	}
 	return buf;
 }
 
@@ -1323,12 +1331,12 @@ static int McdSlot2_alter(u32 keys)
 	int slot = Config.McdSlot2;
 	if (keys & KEY_RIGHT)
 	{
-		if (++slot > 16) slot = 1;
+		if (++slot > 16) slot = 0;
 	}
 	else
 	if (keys & KEY_LEFT)
 	{
-		if (--slot < 1) slot = 16;
+		if (--slot < 0) slot = 16;
 	}
 	Config.McdSlot2 = slot;
 	update_memcards(2);
@@ -1337,8 +1345,16 @@ static int McdSlot2_alter(u32 keys)
 
 static char *McdSlot2_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "mcd%03d.mcr", (int)Config.McdSlot2);
+	static char buf[32] = "\0";
+	if (Config.McdSlot2 == 0) {
+		if (CdromId[0] == '\0') {
+			strcpy(buf, "per-disk");
+		} else {
+			sprintf(buf, "%s.2", CdromId);
+		}
+	} else {
+		sprintf(buf, "mcd%03d.mcr", (int)Config.McdSlot2);
+	}
 	return buf;
 }
 
