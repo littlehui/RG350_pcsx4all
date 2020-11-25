@@ -72,8 +72,6 @@ int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 480;
 static bool pcsx4all_initted = false;
 static bool emu_running = false;
 
-void config_load();
-void config_save();
 void update_window_size(int w, int h, bool ntsc_fix);
 
 #ifdef GCW_ZERO
@@ -90,13 +88,110 @@ void set_keep_aspect_ratio(bool n) {
 
 #endif
 
+static char *home                 = NULL;
+static char homedir[PATH_MAX]     = "./.pcsx4all";
+static char memcardsdir[PATH_MAX] = "./.pcsx4all/memcards";
+static char biosdir[PATH_MAX]     = "./.pcsx4all/bios";
+static char patchesdir[PATH_MAX]  = "./.pcsx4all/patches";
+char sstatesdir[PATH_MAX]         = "./.pcsx4all/sstates";
+char cheatsdir[PATH_MAX]          = "./.pcsx4all/cheats";
+static char configdir[PATH_MAX]   = "./.pcsx4all/config";
+
+static char McdPath1[MAXPATHLEN]  = "";
+static char McdPath2[MAXPATHLEN]  = "";
+static char BiosFile[MAXPATHLEN]  = "";
+
+char CdromName[PATH_MAX]    = "";
+int config_override_enabled = 0;
+int config_override_active  = 0;
+
+#ifdef __WIN32__
+	#define MKDIR(A) mkdir(A)
+#else
+	#define MKDIR(A) mkdir(A, 0777)
+#endif
+
+static char *path_find_last_slash(const char *str)
+{
+	const char *slash     = strrchr(str, '/');
+#ifdef __WIN32__
+	const char *backslash = strrchr(str, '\\');
+
+	if (!slash || (backslash > slash))
+		return (char*)backslash;
+#endif
+	return (char*)slash;
+}
+
+static const char *path_basename(const char *path)
+{
+	const char *last = path_find_last_slash(path);
+	if (last)
+		return last + 1;
+
+	return path;
+}
+
+static char *path_remove_extension(char *path)
+{
+	char *last = (path && *path) ? (char*)strrchr(path_basename(path), '.') : NULL;
+	if (!last)
+		return NULL;
+	if (*last)
+		*last = '\0';
+	return path;
+}
+
+int path_file_exists(const char *path)
+{
+	int exists = 0;
+
+	if (!string_is_empty(path)) {
+#ifdef __WIN32__
+		/* I don't have a Windows install for testing,
+		 * so just use generic 'fopen' method
+		 * (works on all platforms) */
+		FILE *file = fopen(path, "r");
+		if (file != NULL) {
+			fclose(file);
+			exists = 1;
+		}
+#else
+		struct stat buf = {0};
+		int ret = stat(path, &buf);
+		if (ret == 0) {
+			exists = 1;
+		}
+#endif
+	}
+
+	return exists;
+}
+
+void set_cdrom_name(const char *filepath)
+{
+	CdromName[0] = '\0';
+
+	if (!string_is_empty(filepath)) {
+		const char *basename = path_basename(filepath);
+		if (!string_is_empty(basename)) {
+			strcpy(CdromName, basename);
+			path_remove_extension(CdromName);
+		}
+	}
+}
+
 static void pcsx4all_exit(void)
 {
 	// unload cheats
 	cheat_unload();
 
 	// Store config to file
-	config_save();
+	if (config_override_active) {
+		config_save(CdromName);
+	} else {
+		config_save(NULL);
+	}
 
 #ifdef GCW_ZERO
 	/* It is good manners to leave IPU scaling in
@@ -125,24 +220,6 @@ static void pcsx4all_exit(void)
 	}
 }
 
-static char *home = NULL;
-static char homedir[PATH_MAX] =		"./.pcsx4all";
-static char memcardsdir[PATH_MAX] =	"./.pcsx4all/memcards";
-static char biosdir[PATH_MAX] =		"./.pcsx4all/bios";
-static char patchesdir[PATH_MAX] =	"./.pcsx4all/patches";
-char sstatesdir[PATH_MAX] = "./.pcsx4all/sstates";
-char cheatsdir[PATH_MAX] = "./.pcsx4all/cheats";
-
-static char McdPath1[MAXPATHLEN] = "";
-static char McdPath2[MAXPATHLEN] = "";
-static char BiosFile[MAXPATHLEN] = "";
-
-#ifdef __WIN32__
-	#define MKDIR(A) mkdir(A)
-#else
-	#define MKDIR(A) mkdir(A, 0777)
-#endif
-
 static void setup_paths()
 {
 #ifndef __WIN32__
@@ -152,12 +229,13 @@ static void setup_paths()
 	home = getcwd(buf, PATH_MAX);
 #endif
 	if (home) {
-		sprintf(homedir, "%s/.pcsx4all", home);
-		sprintf(sstatesdir, "%s/sstates", homedir);
+		sprintf(homedir,     "%s/.pcsx4all", home);
+		sprintf(sstatesdir,  "%s/sstates", homedir);
 		sprintf(memcardsdir, "%s/memcards", homedir);
-		sprintf(biosdir, "%s/bios", homedir);
-		sprintf(patchesdir, "%s/patches", homedir);
-		sprintf(cheatsdir, "%s/cheats", homedir);
+		sprintf(biosdir,     "%s/bios", homedir);
+		sprintf(patchesdir,  "%s/patches", homedir);
+		sprintf(cheatsdir,   "%s/cheats", homedir);
+		sprintf(configdir,   "%s/config", homedir);
 	}
 
 	MKDIR(homedir);
@@ -166,6 +244,7 @@ static void setup_paths()
 	MKDIR(biosdir);
 	MKDIR(patchesdir);
 	MKDIR(cheatsdir);
+	MKDIR(configdir);
 }
 
 void probe_lastdir()
@@ -189,22 +268,48 @@ void probe_lastdir()
 extern u32 cycle_multiplier; // in mips/recompiler.cpp
 #endif
 
-void config_load()
+void config_get_override_filename(const char *diskname, char *filename)
 {
-	FILE *f;
+	*filename = '\0';
+	if (!string_is_empty(diskname)) {
+		sprintf(filename, "%s/%s.cfg", configdir, diskname);
+	}
+}
+
+int config_load(const char *diskname)
+{
+	FILE *f     = NULL;
+	int lineNum = 0;
 	char config[MAXPATHLEN];
 	char line[MAXPATHLEN + 8 + 1];
-	int lineNum = 0;
 
-	sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
-	f = fopen(config, "r");
+	line[0]   = '\0';
 
+	/* If a disk name is provided, attempt to open
+	 * config override */
+	if (!string_is_empty(diskname)) {
+		config_get_override_filename(diskname, config);
+		f = fopen(config, "r");
+		if (f == NULL) {
+			printf("Failed to open config override: \"%s\" for reading - using default config.\n", config);
+		}
+	}
+
+	/* Otherwise attempt to open default config file */
 	if (f == NULL) {
+		config[0] = '\0';
+		sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
+		f = fopen(config, "r");
+	}
+
+	/* Otherwise attempt to open legacy config file */
+	if (f == NULL) {
+		config[0] = '\0';
 		sprintf(config, "%s/pcsx4all.cfg", homedir);
 		f = fopen(config, "r");
 		if (f == NULL) {
 			printf("Failed to open config file: \"%s\" for reading.\n", config);
-			return;
+			return 0;
 		}
 	}
 
@@ -403,20 +508,35 @@ void config_load()
 	}
 
 	fclose(f);
+	return 1;
 }
 
-void config_save()
+int config_save(const char *diskname)
 {
-	FILE *f;
+	FILE *f = NULL;
 	char config[MAXPATHLEN];
 
-	sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
+	/* If a disk name is provided, attempt to open
+	 * config override */
+	if (!string_is_empty(diskname)) {
+		config_get_override_filename(diskname, config);
+		f = fopen(config, "w");
+		if (f == NULL) {
+			printf("Failed to open config override: \"%s\" for writing.\n", config);
+			return 0;
+		}
+	}
 
-	f = fopen(config, "w");
+	/* Otherwise attempt to open default config file */
+	if (f == NULL) {
+		config[0] = '\0';
+		sprintf(config, "%s/pcsx4all_ng.cfg", homedir);
+		f = fopen(config, "w");
+	}
 
 	if (f == NULL) {
 		printf("Failed to open config file: \"%s\" for writing.\n", config);
-		return;
+		return 0;
 	}
 
 	fprintf(f, "CONFIG_VERSION %d\n"
@@ -491,6 +611,7 @@ void config_save()
 	}
 
 	fclose(f);
+	return 1;
 }
 
 // Returns 0: success, -1: failure
@@ -836,7 +957,7 @@ const char *GetMemcardPath(int slot) {
 void update_memcards(int load_mcd) {
 
 	if (Config.McdSlot1 == 0) {
-		if (CdromId[0] == '\0') {
+		if (string_is_empty(CdromId)) {
 			/* Fallback */
 			sprintf(McdPath1, "%s/%s", memcardsdir, "card1.mcd");
 		} else {
@@ -847,7 +968,7 @@ void update_memcards(int load_mcd) {
 	}
 
 	if (Config.McdSlot2 == 0) {
-		if (CdromId[0] == '\0') {
+		if (string_is_empty(CdromId)) {
 			/* Fallback */
 			sprintf(McdPath2, "%s/%s", memcardsdir, "card2.mcd");
 		} else {
@@ -1129,15 +1250,10 @@ int main (int argc, char **argv)
 	gpu_unai_config_ext.ntsc_fix = 1;
 #endif
 
-	// Load config from file.
-	config_load();
+	// Load default config from file.
+	config_load(NULL);
 	// Check if LastDir exists.
 	probe_lastdir();
-
-#ifdef GCW_ZERO
-	/* Apply hardware scaling 'keep aspect' setting */
-	set_keep_aspect_ratio(Config.VideoHwKeepAspect);
-#endif
 
 	// command line options
 	bool param_parse_error = 0;
@@ -1437,13 +1553,39 @@ int main (int argc, char **argv)
 #endif //!SPU_NULL
 	}
 
-	update_memcards(0);
-	strcpy(BiosFile, Config.Bios);
-
 	if (param_parse_error) {
 		printf("Failed to parse command-line parameters, exiting.\n");
 		exit(1);
 	}
+
+	/* If we have a valid filename at this point,
+	 * then config overrides are enabled
+	 * > Set CdromName and check whether an
+	 *   override exists */
+	if (!string_is_empty(cdrfilename)) {
+		set_cdrom_name(cdrfilename);
+	} else if (!string_is_empty(filename)) {
+		set_cdrom_name(filename);
+	}
+
+	if (!string_is_empty(CdromName)) {
+		char config_file[MAXPATHLEN];
+		config_override_enabled = 1;
+		config_get_override_filename(CdromName, config_file);
+		if (path_file_exists(config_file)) {
+			config_override_active = 1;
+			config_load(CdromName);
+			probe_lastdir();
+		}
+	}
+
+	update_memcards(0);
+	strcpy(BiosFile, Config.Bios);
+
+#ifdef GCW_ZERO
+	/* Apply hardware scaling 'keep aspect' setting */
+	set_keep_aspect_ratio(Config.VideoHwKeepAspect);
+#endif
 
 	//NOTE: spu_pcsxrearmed will handle audio initialization
 
@@ -1491,7 +1633,7 @@ int main (int argc, char **argv)
 		update_window_size(320, 240, false);
 	}
 
-	if (argc < 2 || cdrfilename[0] == '\0') {
+	if (argc < 2 || string_is_empty(cdrfilename)) {
 		// Enter frontend main-menu:
 		emu_running = false;
 		if (!SelectGame()) {
@@ -1499,7 +1641,6 @@ int main (int argc, char **argv)
 			exit(1);
 		}
 	}
-
 
 	if (psxInit() == -1) {
 		printf("PSX emulator couldn't be initialized.\n");
@@ -1517,7 +1658,7 @@ int main (int argc, char **argv)
 	// Initialize plugin_lib, gpulib
 	pl_init();
 
-	if (cdrfilename[0] != '\0') {
+	if (!string_is_empty(cdrfilename)) {
 		if (CheckCdrom() == -1) {
 			psxReset();
 			printf("Failed checking ISO image.\n");
@@ -1549,8 +1690,7 @@ int main (int argc, char **argv)
 	Rumble_Init();
 	joy_init();
 
-
-	if (filename[0] != '\0') {
+	if (!string_is_empty(filename)) {
 		if (Load(filename) == -1) {
 			printf("Failed loading executable.\n");
 			filename[0]='\0';
@@ -1559,11 +1699,11 @@ int main (int argc, char **argv)
 		printf("Running executable: %s.\n",filename);
 	}
 
-	if ((cdrfilename[0] == '\0') && (filename[0] == '\0') && (Config.HLE == 0)) {
+	if (string_is_empty(cdrfilename) && string_is_empty(filename) && (Config.HLE == 0)) {
 		printf("Running BIOS.\n");
 	}
 
-	if ((cdrfilename[0] != '\0') || (filename[0] != '\0') || (Config.HLE == 0)) {
+	if (!string_is_empty(cdrfilename) || !string_is_empty(filename) || (Config.HLE == 0)) {
 		psxCpu->Execute();
 	}
 

@@ -320,14 +320,23 @@ void cdrLidSeekInterrupt()
 			// closed now
 			CheckCdrom();
 
-			/* If we are using per-disk memory cards, reload
-			 * them (unless this is a multi-cd image) */
+			/* Check whether this is *not* a multi-cd image */
 			if (cdrIsoMultidiskCount == 1) {
+				/* If we are using per-disk memory cards,
+				 * reload them */
 				if (Config.McdSlot1 == 0) {
 					update_memcards(1);
 				}
 				if (Config.McdSlot2 == 0) {
 					update_memcards(2);
+				}
+				/* If config overrides are enabled, update
+				 * CdromName */
+				if (config_override_enabled) {
+					const char *iso_file = GetIsoFile();
+					if (iso_file && (*iso_file != '\0')) {
+						set_cdrom_name(iso_file);
+					}
 				}
 			}
 
