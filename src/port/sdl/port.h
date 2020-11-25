@@ -55,6 +55,13 @@ INLINE int string_is_empty(const char *data)
 int path_file_exists(const char *path);
 void set_cdrom_name(const char *filepath);
 
+enum ipu_filter_type
+{
+	IPU_FILTER_BICUBIC  = 0,
+	IPU_FILTER_BILINEAR = 1,
+	IPU_FILTER_NEAREST  = 2
+};
+
 #define	CONFIG_VERSION	0
 
 void config_get_override_filename(const char *diskname, char *filename);

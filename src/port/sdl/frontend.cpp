@@ -1523,7 +1523,7 @@ static int videoscaling_alter(u32 keys)
 }
 
 static char *videoscaling_show() {
-	const char* str[] = {"hardware", "nearest"};
+	const char* str[] = {"hardware", "software"};
 	int vs = Config.VideoScaling;
 	if (vs < 0) vs = 0;
 	else if (vs > 1) vs = 1;
@@ -1533,7 +1533,7 @@ static char *videoscaling_show() {
 static void videoscaling_hint() {
 	switch(Config.VideoScaling) {
 	case 0:
-		port_printf(4 * 8, 10 * 8, "Hardware scaling (fast)");
+		port_printf(4 * 8, 10 * 8, "Hardware IPU scaling (fast)");
 		break;
 	case 1:
 		port_printf(4 * 8, 10 * 8, "Software nearest-neighbour");
@@ -1543,7 +1543,8 @@ static void videoscaling_hint() {
 
 #ifdef GCW_ZERO
 
-extern void set_keep_aspect_ratio(bool n);
+extern void set_ipu_keep_aspect_ratio(bool n);
+extern void set_ipu_filter_type(enum ipu_filter_type filter_type);
 
 static int VideoHwKeepAspect_alter(u32 keys)
 {
@@ -1554,7 +1555,7 @@ static int VideoHwKeepAspect_alter(u32 keys)
 		if (Config.VideoHwKeepAspect == true) Config.VideoHwKeepAspect = false;
 	}
 	if (Config.VideoHwKeepAspect != last_keep_aspect) {
-		set_keep_aspect_ratio(Config.VideoHwKeepAspect);
+		set_ipu_keep_aspect_ratio(Config.VideoHwKeepAspect);
 	}
 	return 0;
 }
@@ -1568,6 +1569,42 @@ static char *VideoHwKeepAspect_show()
 
 static void VideoHwKeepAspect_hint() {
 	port_printf(4 * 8, 10 * 8, "Keep pixel aspect ratio (hardware)");
+}
+
+static int VideoHwFilter_alter(u32 keys)
+{
+	enum ipu_filter_type last_filter_type = (enum ipu_filter_type)Config.VideoHwFilter;
+	if (keys & KEY_RIGHT) {
+		if (Config.VideoHwFilter < IPU_FILTER_NEAREST) Config.VideoHwFilter++;
+	} else if (keys & KEY_LEFT) {
+		if (Config.VideoHwFilter > IPU_FILTER_BICUBIC) Config.VideoHwFilter--;
+	}
+	if ((enum ipu_filter_type)Config.VideoHwFilter != last_filter_type) {
+		set_ipu_filter_type((enum ipu_filter_type)Config.VideoHwFilter);
+	}
+	return 0;
+}
+
+static char *VideoHwFilter_show()
+{
+	static char buf[16] = "\0";
+	switch ((enum ipu_filter_type)Config.VideoHwFilter)	{
+	case IPU_FILTER_BILINEAR:
+		sprintf(buf, "%s", "bilinear");
+		break;
+	case IPU_FILTER_NEAREST:
+		sprintf(buf, "%s", "nearest");
+		break;
+	case IPU_FILTER_BICUBIC:
+	default:
+		sprintf(buf, "%s", "bicubic");
+		break;
+	}
+	return buf;
+}
+
+static void VideoHwFilter_hint() {
+	port_printf(4 * 8, 10 * 8, "Image filtering method (hardware)");
 }
 
 #endif //GCW_ZERO
@@ -1725,6 +1762,7 @@ static int gpu_settings_defaults()
 	Config.FrameSkip = FRAMESKIP_OFF;
 	Config.VideoScaling = 0;
 	Config.VideoHwKeepAspect = true;
+	Config.VideoHwFilter = (u8)IPU_FILTER_BICUBIC;
 
 #ifdef GPU_UNAI
 #ifndef USE_GPULIB
@@ -1750,7 +1788,8 @@ static MENUITEM gui_GPUSettingsItems[] = {
 	{(char *)"Frame skip           ", NULL, &frameskip_alter, &frameskip_show, NULL},
 	{(char *)"Video Scaling        ", NULL, &videoscaling_alter, &videoscaling_show, &videoscaling_hint},
 #ifdef GCW_ZERO
-	{(char *)"Keep Aspect (HW)     ", NULL, &VideoHwKeepAspect_alter, &VideoHwKeepAspect_show, &VideoHwKeepAspect_hint},
+	{(char *)"(HW) Keep Aspect     ", NULL, &VideoHwKeepAspect_alter, &VideoHwKeepAspect_show, &VideoHwKeepAspect_hint},
+	{(char *)"(HW) Video Filter    ", NULL, &VideoHwFilter_alter, &VideoHwFilter_show, &VideoHwFilter_hint},
 #endif
 #endif
 #ifdef GPU_UNAI

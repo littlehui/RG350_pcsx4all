@@ -173,6 +173,12 @@ typedef struct {
 	 * false: Stretch to fill screen */
 	boolean VideoHwKeepAspect;
 
+	/* When using 'Hardware' video scaling:
+	 * 0: IPU_FILTER_BICUBIC
+	 * 1: IPU_FILTER_BILINEAR
+	 * 2: IPU_FILTER_NEAREST */
+	u8 VideoHwFilter;
+
 	// Options for performance monitor
 	boolean PerfmonConsoleOutput;
 	boolean PerfmonDetailedStats;

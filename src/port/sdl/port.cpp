@@ -76,13 +76,58 @@ void update_window_size(int w, int h, bool ntsc_fix);
 
 #ifdef GCW_ZERO
 
-#define DINGUX_KEEP_ASPECT_FILE "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio"
+#define DINGUX_KEEP_ASPECT_FILE           "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio"
+#define DINGUX_SHARPNESS_UPSCALING_FILE   "/sys/devices/platform/jz-lcd.0/sharpness_upscaling"
+#define DINGUX_SHARPNESS_DOWNSCALING_FILE "/sys/devices/platform/jz-lcd.0/sharpness_downscaling"
 
-void set_keep_aspect_ratio(bool n) {
+void set_ipu_keep_aspect_ratio(bool n) {
 	FILE *keep_aspect_file = fopen(DINGUX_KEEP_ASPECT_FILE, "wb");
 	if (keep_aspect_file) {
 		fputs(n ? "1" : "0", keep_aspect_file);
 		fclose(keep_aspect_file);
+	}
+}
+
+void set_ipu_filter_type(enum ipu_filter_type filter_type)
+{
+	/* Sharpness settings range is [0,32]
+	 * - 0:      nearest-neighbour
+	 * - 1:      bilinear
+	 * - 2...32: bicubic (translating to a sharpness
+	 *                    factor of -0.25..-4.0 internally)
+	 * Default bicubic sharpness factor is
+	 * (-0.125 * 8) = -1.0 */
+	const char *sharpness_str        = "8";
+	FILE *sharpness_upscaling_file   = NULL;
+	FILE *sharpness_downscaling_file = NULL;
+
+	/* Check filter type */
+	switch (filter_type)	{
+	case IPU_FILTER_BILINEAR:
+		sharpness_str = "1";
+		break;
+	case IPU_FILTER_NEAREST:
+		sharpness_str = "0";
+		break;
+	case IPU_FILTER_BICUBIC:
+	default:
+		/* sharpness_str is already set to 8
+		 * by default */
+		break;
+	}
+
+	/* Set upscaling sharpness */
+	sharpness_upscaling_file = fopen(DINGUX_SHARPNESS_UPSCALING_FILE, "wb");
+	if (sharpness_upscaling_file) {
+		fputs(sharpness_str, sharpness_upscaling_file);
+		fclose(sharpness_upscaling_file);
+	}
+
+	/* Set downscaling sharpness */
+	sharpness_downscaling_file = fopen(DINGUX_SHARPNESS_DOWNSCALING_FILE, "wb");
+	if (sharpness_downscaling_file) {
+		fputs(sharpness_str, sharpness_downscaling_file);
+		fclose(sharpness_downscaling_file);
 	}
 }
 
@@ -195,9 +240,13 @@ static void pcsx4all_exit(void)
 
 #ifdef GCW_ZERO
 	/* It is good manners to leave IPU scaling in
-	 * the default 'keep aspect' state when quitting
-	 * an application */
-	set_keep_aspect_ratio(true);
+	 * the default state when quitting an application */
+	if (!Config.VideoHwKeepAspect) {
+		set_ipu_keep_aspect_ratio(true);
+	}
+	if ((enum ipu_filter_type)Config.VideoHwFilter != IPU_FILTER_BICUBIC) {
+		set_ipu_filter_type(IPU_FILTER_BICUBIC);
+	}
 #endif
 
 	if (SDL_MUSTLOCK(screen))
@@ -422,6 +471,9 @@ int config_load(const char *diskname)
 		} else if (!strcmp(line, "VideoHwKeepAspect")) {
 			sscanf(arg, "%d", &value);
 			Config.VideoHwKeepAspect = value;
+		} else if (!strcmp(line, "VideoHwFilter")) {
+			sscanf(arg, "%d", &value);
+			Config.VideoHwFilter = value;
 		}
 #ifdef SPU_PCSXREARMED
 		else if (!strcmp(line, "SpuUseInterpolation")) {
@@ -563,13 +615,15 @@ int config_save(const char *diskname)
 		   "FrameLimit %d\n"
 		   "FrameSkip %d\n"
 		   "VideoScaling %d\n"
-		   "VideoHwKeepAspect %d\n",
+		   "VideoHwKeepAspect %d\n"
+		   "VideoHwFilter %d\n",
 		   CONFIG_VERSION, Config.Xa, Config.Mdec, Config.PsxAuto, Config.Cdda,
 		   Config.HLE, Config.SlowBoot, Config.AnalogArrow, Config.AnalogMode, Config.MenuToggleCombo,
 		   Config.RCntFix, Config.VSyncWA, Config.Cpu, Config.PsxType,
 		   Config.McdSlot1, Config.McdSlot2, Config.SpuIrq, Config.SyncAudio,
 		   Config.SpuUpdateFreq, Config.ForcedXAUpdates, Config.ShowFps,
-		   Config.FrameLimit, Config.FrameSkip, Config.VideoScaling, Config.VideoHwKeepAspect);
+		   Config.FrameLimit, Config.FrameSkip, Config.VideoScaling,
+		   Config.VideoHwKeepAspect, Config.VideoHwFilter);
 
 #ifdef SPU_PCSXREARMED
 	fprintf(f, "SpuUseInterpolation %d\n", spu_config.iUseInterpolation);
@@ -1163,6 +1217,7 @@ int main (int argc, char **argv)
 	Config.FrameSkip = FRAMESKIP_OFF;
 	Config.VideoScaling = 0;
 	Config.VideoHwKeepAspect = true;
+	Config.VideoHwFilter = (u8)IPU_FILTER_BICUBIC;
 
 	//zear - Added option to store the last visited directory.
 	strncpy(Config.LastDir, home, MAXPATHLEN); /* Defaults to home directory. */
@@ -1584,7 +1639,9 @@ int main (int argc, char **argv)
 
 #ifdef GCW_ZERO
 	/* Apply hardware scaling 'keep aspect' setting */
-	set_keep_aspect_ratio(Config.VideoHwKeepAspect);
+	set_ipu_keep_aspect_ratio(Config.VideoHwKeepAspect);
+	/* Apply hardware scaling 'filter' setting */
+	set_ipu_filter_type((enum ipu_filter_type)Config.VideoHwFilter);
 #endif
 
 	//NOTE: spu_pcsxrearmed will handle audio initialization
