@@ -1172,17 +1172,6 @@ static char *bios_file_show()
 	return (char*)bios_file_get();
 }
 
-static int RCntFix_alter(u32 keys)
-{
-	if (keys & KEY_RIGHT) {
-		if (Config.RCntFix < 1) Config.RCntFix = 1;
-	} else if (keys & KEY_LEFT) {
-		if (Config.RCntFix > 0) Config.RCntFix = 0;
-	}
-
-	return 0;
-}
-
 static char *SlowBoot_show()
 {
 	static char buf[16] = "\0";
@@ -1291,6 +1280,42 @@ static char* MenuToggleCombo_show()
 	}
 
 	return buf;
+}
+
+#ifndef __WIN32__
+
+static int AsyncCD_alter(u32 keys)
+{
+	if (keys & KEY_RIGHT) {
+		if (Config.AsyncCD == false) Config.AsyncCD = true;
+	} else if (keys & KEY_LEFT) {
+		if (Config.AsyncCD == true) Config.AsyncCD = false;
+	}
+	return 0;
+}
+
+static char *AsyncCD_show()
+{
+	static char buf[16] = "\0";
+	sprintf(buf, "%s", Config.AsyncCD == true ? "Async" : "Sync");
+	return buf;
+}
+
+static void AsyncCD_hint() {
+	port_printf(2 * 8, 10 * 8, "Async: Reduce stutter (restart req.)");
+}
+
+#endif
+
+static int RCntFix_alter(u32 keys)
+{
+	if (keys & KEY_RIGHT) {
+		if (Config.RCntFix < 1) Config.RCntFix = 1;
+	} else if (keys & KEY_LEFT) {
+		if (Config.RCntFix > 0) Config.RCntFix = 0;
+	}
+
+	return 0;
 }
 
 static char *RCntFix_show()
@@ -1402,6 +1427,7 @@ static int settings_defaults()
 	Config.AnalogArrow = 0;
 	Config.AnalogMode = 3;
 	Config.MenuToggleCombo = 0;
+	Config.AsyncCD = 0;
 	Config.RCntFix = 0;
 	Config.VSyncWA = 0;
 #ifdef PSXREC
@@ -1427,6 +1453,9 @@ static MENUITEM gui_SettingsItems[] = {
 	{(char *)"Map L-stick to Dpad", NULL, &AnalogArrow_alter, &AnalogArrow_show, &AnalogArrow_hint},
 	{(char *)"Analog Mode        ", NULL, &Analog_Mode_alter, &Analog_Mode_show, &Analog_Mode_hint},
 	{(char *)"Menu Toggle Combo  ", NULL, &MenuToggleCombo_alter, &MenuToggleCombo_show, &MenuToggleCombo_hint},
+#ifndef __WIN32__
+	{(char *)"CD Access          ", NULL, &AsyncCD_alter, &AsyncCD_show, &AsyncCD_hint},
+#endif
 	{(char *)"RCntFix            ", NULL, &RCntFix_alter, &RCntFix_show, &RCntFix_hint},
 	{(char *)"VSyncWA            ", NULL, &VSyncWA_alter, &VSyncWA_show, &VSyncWA_hint},
 	{(char *)"Memory card Slot1  ", NULL, &McdSlot1_alter, &McdSlot1_show, NULL},

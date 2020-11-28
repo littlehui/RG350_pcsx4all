@@ -129,6 +129,7 @@ typedef struct {
 	boolean Mdec; /* 0=Black&White Mdecs Only Disabled, 1=Black&White Mdecs Only Enabled */
 	boolean PsxAuto; /* 1=autodetect system (pal or ntsc) */
 	boolean Cdda; /* 0=Enable Cd audio, 1=Disable Cd audio */
+	boolean AsyncCD; /* 0=Synchronous Cd access, 1=Asynchronous Cd access */
 	boolean HLE; /* 1=HLE, 0=bios */
 	boolean SlowBoot; /* 0=skip bios logo sequence on boot  1=show sequence (does not apply to HLE) */
 	boolean AnalogArrow; /* 0=disable 1=use L-stick as D-pad arrow key */
