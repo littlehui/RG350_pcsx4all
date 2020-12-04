@@ -32,8 +32,25 @@
 
 #ifdef RUMBLE
 #include "libShake/include/shake.h"
-Shake_Device *device;
-int id_shake_level[16];
+
+/* Weak rumble is either off or on */
+#define RUMBLE_WEAK_MAGNITUDE SHAKE_RUMBLE_WEAK_MAGNITUDE_MAX
+
+/* Strong rumble is internally in the range [0,255] */
+#define RUMBLE_STRONG_MAGNITUDE_FACTOR (SHAKE_RUMBLE_STRONG_MAGNITUDE_MAX / 255)
+
+typedef struct
+{
+	Shake_Device *device;
+	Shake_Effect effect;
+	int id;
+	uint8_t low;
+	uint8_t high;
+	bool active;
+	bool initialised;
+} joypad_rumble_t;
+
+static joypad_rumble_t joypad_rumble = {0};
 #endif
 
 enum {
@@ -255,11 +272,16 @@ static void pcsx4all_exit(void)
 	SDL_Quit();
 
 #ifdef RUMBLE
-	//Shake_Stop(device, id_shake_small);
-	//Shake_Stop(device, id_shake_big);
-	for (int i = 0; i < 16; i++)
-		Shake_EraseEffect(device, id_shake_level[i]);
-	Shake_Close(device);
+	if (joypad_rumble.device)
+	{
+		if (joypad_rumble.active)
+			Shake_Stop(joypad_rumble.device, joypad_rumble.id);
+
+		Shake_EraseEffect(joypad_rumble.device, joypad_rumble.id);
+
+		Shake_Close(joypad_rumble.device);
+		memset(&joypad_rumble, 0, sizeof(joypad_rumble_t));
+	}
 	Shake_Quit();
 #endif
 
@@ -419,7 +441,14 @@ int config_load(const char *diskname)
 			Config.AnalogArrow = value;
 		} else if (!strcmp(line, "Analog_Mode")) {
 			sscanf(arg, "%d", &value);
+			if (value < 0 || value > 3)
+				value = 3;
 			Config.AnalogMode = value;
+		} else if (!strcmp(line, "RumbleGain")) {
+			sscanf(arg, "%d", &value);
+			if (value < 0 || value > 100)
+				value = 100;
+			Config.RumbleGain = value;
 		} else if (!strcmp(line, "MenuToggleCombo")) {
 			sscanf(arg, "%d", &value);
 			Config.MenuToggleCombo = value;
@@ -604,6 +633,7 @@ int config_save(const char *diskname)
 		   "SlowBoot %d\n"
 		   "AnalogArrow %d\n"
 		   "Analog_Mode %d\n"
+		   "RumbleGain %d\n"
 		   "MenuToggleCombo %d\n"
 		   "RCntFix %d\n"
 		   "VSyncWA %d\n"
@@ -622,7 +652,7 @@ int config_save(const char *diskname)
 		   "VideoHwKeepAspect %d\n"
 		   "VideoHwFilter %d\n",
 		   CONFIG_VERSION, Config.Xa, Config.Mdec, Config.PsxAuto, Config.Cdda, Config.AsyncCD,
-		   Config.HLE, Config.SlowBoot, Config.AnalogArrow, Config.AnalogMode, Config.MenuToggleCombo,
+		   Config.HLE, Config.SlowBoot, Config.AnalogArrow, Config.AnalogMode, Config.RumbleGain, Config.MenuToggleCombo,
 		   Config.RCntFix, Config.VSyncWA, Config.Cpu, Config.PsxType,
 		   Config.McdSlot1, Config.McdSlot2, Config.SpuIrq, Config.SyncAudio,
 		   Config.SpuUpdateFreq, Config.ForcedXAUpdates, Config.ShowFps,
@@ -926,6 +956,9 @@ void pad_update()
 		// automatically, displaying message that write is in progress.
 		sioSyncMcds();
 
+		/* Disable any rumble effects */
+		trigger_rumble(0, 0);
+
 		emu_running = false;
 		pl_pause();    // Tell plugin_lib we're pausing emu
 		update_window_size(320, 240, false);
@@ -1072,37 +1105,143 @@ with mingw build. */
 #undef main
 #endif
 
-void Rumble_Init() {
 #ifdef RUMBLE
-	static bool rumble_init = false;
-	
-	if (rumble_init)
+int set_rumble_gain(unsigned gain)
+{
+	if (!joypad_rumble.device) {
+		return 0;
+	}
+
+	if (Shake_SetGain(joypad_rumble.device, (int)gain) != SHAKE_OK) {
+		return 0;
+	}
+
+	return 1;
+}
+
+void Rumble_Init() {
+	bool effect_uploaded = false;
+
+	if (joypad_rumble.initialised)
 	{
 		printf("ERROR: Rumble already initialized !\n");
 		return;
 	}
+
+	memset(&joypad_rumble, 0, sizeof(joypad_rumble_t));
 	Shake_Init();
 
-	if (Shake_NumOfDevices() > 0) {
-		device = Shake_Open(0);
+	/* If gain is zero, no need to initialise device */
+	if (Config.RumbleGain == 0)
+		goto error;
 
-		Shake_Effect temp_effect;		
-		for(int i = 0; i < 16; i++)
-		{
-			Shake_InitEffect(&temp_effect, SHAKE_EFFECT_RUMBLE);
-			temp_effect.u.rumble.strongMagnitude = SHAKE_RUMBLE_STRONG_MAGNITUDE_MAX * (0.4f + 0.0375f * (i + 1));
-			temp_effect.u.rumble.weakMagnitude = SHAKE_RUMBLE_WEAK_MAGNITUDE_MAX;
-			temp_effect.length = 17;
-			temp_effect.delay = 0;
-			id_shake_level[i] = Shake_UploadEffect(device, &temp_effect);
-		}		
-		
-	}
+	if (Shake_NumOfDevices() < 1)
+		goto error;
+
+	/* Open shake device */
+	joypad_rumble.device = Shake_Open(0);
+
+	if (!joypad_rumble.device)
+		goto error;
+
+	/* Check whether shake device has the
+	 * required feature set */
+	if (!Shake_QueryEffectSupport(joypad_rumble.device, SHAKE_EFFECT_RUMBLE) ||
+		 !Shake_QueryGainSupport(joypad_rumble.device))
+		goto error;
+
+	/* Initialise rumble effect */
+	if (Shake_InitEffect(&joypad_rumble.effect, SHAKE_EFFECT_RUMBLE) != SHAKE_OK)
+		goto error;
+
+	joypad_rumble.effect.u.rumble.weakMagnitude   = 0;
+	joypad_rumble.effect.u.rumble.strongMagnitude = 0;
+	joypad_rumble.effect.length                   = 0; /* Infinite */
+	joypad_rumble.effect.delay                    = 0;
+	joypad_rumble.id                              = Shake_UploadEffect(
+			joypad_rumble.device, &joypad_rumble.effect);
+
+	if (joypad_rumble.id == SHAKE_ERROR)
+		goto error;
+	effect_uploaded = true;
+
+	/* Set gain */
+	if (!set_rumble_gain(Config.RumbleGain))
+		goto error;
+
 	printf("Rumble initialized !\n");
+	joypad_rumble.initialised = true;
+	return;
 
-	rumble_init = true;
-#endif
+error:
+	printf("Rumble effects disabled...\n");
+	joypad_rumble.initialised = true;
+
+	if (joypad_rumble.device)
+	{
+		if (effect_uploaded)
+			Shake_EraseEffect(joypad_rumble.device, joypad_rumble.id);
+
+		Shake_Close(joypad_rumble.device);
+		joypad_rumble.device = NULL;
+	}
 }
+
+int trigger_rumble(uint8_t low, uint8_t high)
+{
+	if (!joypad_rumble.device) {
+		return 0;
+	}
+
+	/* If total strength is zero, halt rumble effect */
+	if ((low == 0) && (high == 0)) {
+		if (joypad_rumble.active) {
+			if (Shake_Stop(joypad_rumble.device, joypad_rumble.id) == SHAKE_OK) {
+				joypad_rumble.active = false;
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+
+		return 1;
+	}
+
+	/* If strength has changed, update effect */
+	if ((low != joypad_rumble.low) || (high != joypad_rumble.high)) {
+		int id;
+
+		joypad_rumble.effect.id                       = joypad_rumble.id;
+		joypad_rumble.effect.u.rumble.weakMagnitude   = low ? RUMBLE_WEAK_MAGNITUDE : 0x0;
+		joypad_rumble.effect.u.rumble.strongMagnitude = (uint16_t)high * RUMBLE_STRONG_MAGNITUDE_FACTOR;
+		id                                            = Shake_UploadEffect(
+				joypad_rumble.device, &joypad_rumble.effect);
+
+		if (id == SHAKE_ERROR) {
+			return 0;
+		}
+
+		joypad_rumble.id                              = id;
+		joypad_rumble.low                             = low;
+		joypad_rumble.high                            = high;
+	}
+
+	/* If effect is currently idle, activate it */
+	if (!joypad_rumble.active) {
+		if (Shake_Play(joypad_rumble.device, joypad_rumble.id) == SHAKE_OK) {
+			joypad_rumble.active = true;
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+#else
+void Rumble_Init() {}
+void trigger_rumble(uint8_t low, uint8_t high) {}
+#endif
 
 void update_window_size(int w, int h, bool ntsc_fix)
 {
@@ -1198,6 +1337,7 @@ int main (int argc, char **argv)
 
 	Config.AnalogArrow = 0; /* 0=disable 1=use L-stick as D-pad arrow key */
 	Config.AnalogMode = 3; /* 0-Digital 1-DualAnalog 2-DualShock (digital mode) 3-DualShock (analog enabled) */
+	Config.RumbleGain = 100; /* [0,100]-Rumble effect strength */
 	/* Gamepad combo used to open menu
 	 * 0: L3 + R3
 	 * 1: SELECT + START

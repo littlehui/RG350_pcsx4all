@@ -21,18 +21,12 @@
 #include "psxcommon.h"
 #include "psxmem.h"
 #include "r3000a.h"
+#include "port.h"
 
 /*
  * code ported from pcsx4all C version.
  *   original by Gameblabla, JamesOFarrel and code based on dfinput for Dual analog/shock.
 */
-
-#ifdef RUMBLE
-#include "libShake/include/shake.h"
-extern Shake_Device *device;
-extern int id_shake_level[16];
-
-#endif
 
 uint8_t CurPad = 0, CurCmd = 0;
 
@@ -209,26 +203,26 @@ unsigned char PAD1_poll(unsigned char value) {
 	{
 		switch (CurCmd) {
 		case CMD_READ_DATA_AND_VIBRATE:
-				if (g.CurByte1 == player_controller[0].Vib[0]) {
+			{
+				int changed = 0;
+
+				if (g.CurByte1 == player_controller[0].Vib[0] &&
+					 player_controller[0].VibF[0] != value) {
 					player_controller[0].VibF[0] = value;
-#ifdef RUMBLE
-					if (player_controller[0].VibF[0] != 0) {
-						Shake_Play(device, id_shake_level[3]);
-					}
-#endif
-					
+					changed = 1;
 				}
 
-				if (g.CurByte1 == player_controller[0].Vib[1]) {
+				if (g.CurByte1 == player_controller[0].Vib[1] &&
+					 player_controller[0].VibF[1] != value) {
 					player_controller[0].VibF[1] = value;
-
-#ifdef RUMBLE
-					if (player_controller[0].VibF[1] != 0) {
-						Shake_Play(device, id_shake_level[value>>4]);
-					}
-#endif
-					
+					changed = 1;
 				}
+
+				if (changed) {
+					trigger_rumble(player_controller[0].VibF[0],
+							player_controller[0].VibF[1]);
+				}
+			}
 			break;
 		case CMD_VIBRATION_TOGGLE:
 			for (uint8_t i = 0; i < 2; i++) {

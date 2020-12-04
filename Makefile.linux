@@ -44,7 +44,9 @@ CFLAGS = $(C_ARCH) -ggdb3 -O2 \
 	-Isrc/port/$(PORT) \
 	-Isrc/plugin_lib \
 	-Isrc/external_lib \
+	-Isrc/libShake/include \
 	-DXA_HACK \
+	-DRUMBLE \
 	-DINLINE="static __inline__" -Dasm="__asm__ __volatile__" \
 	$(SDL_CFLAGS)
 
@@ -55,7 +57,8 @@ CFLAGS += -D$(shell echo $(SPU) | tr a-z A-Z)
 OBJDIRS = \
 	obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
 	obj/port obj/port/$(PORT) \
-	obj/plugin_lib obj/external_lib
+	obj/plugin_lib obj/external_lib \
+	obj/libShake/src/common obj/libShake/src/linux
 
 all: maketree $(TARGET)
 
@@ -68,7 +71,9 @@ OBJS = \
 	obj/mdec.o obj/decode_xa.o \
 	obj/cdriso.o obj/cdrom.o obj/ppf.o obj/cheat.o \
 	obj/sio.o obj/pad.o \
-	obj/external_lib/ioapi.o obj/external_lib/unzip.o
+	obj/external_lib/ioapi.o obj/external_lib/unzip.o \
+	obj/libShake/src/common/error.o obj/libShake/src/common/helpers.o \
+	obj/libShake/src/common/presets.o obj/libShake/src/linux/shake.o
 
 ######################################################################
 #  GPULIB from PCSX Rearmed:

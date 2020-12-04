@@ -1252,6 +1252,37 @@ static char* Analog_Mode_show()
 	return buf;
 }
 
+#ifdef RUMBLE
+static int RumbleGain_alter(u32 keys)
+{
+	unsigned last_rumble_gain = Config.RumbleGain;
+	if (keys & KEY_RIGHT) {
+		if (Config.RumbleGain <= 95) {
+			Config.RumbleGain += 5;
+		} else {
+			Config.RumbleGain = 100;
+		}
+	} else if (keys & KEY_LEFT) {
+		if (Config.RumbleGain >= 5) {
+			Config.RumbleGain -= 5;
+		} else {
+			Config.RumbleGain = 0;
+		}
+	}
+	if (Config.RumbleGain != last_rumble_gain) {
+		set_rumble_gain(Config.RumbleGain);
+	}
+	return 0;
+}
+
+static char* RumbleGain_show()
+{
+	static char buf[16] = "\0";
+	sprintf(buf, "%d%%", Config.RumbleGain);
+	return buf;
+}
+#endif
+
 static int MenuToggleCombo_alter(u32 keys)
 {
 	if (keys & KEY_RIGHT) {
@@ -1426,6 +1457,7 @@ static int settings_defaults()
 	Config.SlowBoot = 0;
 	Config.AnalogArrow = 0;
 	Config.AnalogMode = 3;
+	Config.RumbleGain = 100;
 	Config.MenuToggleCombo = 0;
 	Config.AsyncCD = 0;
 	Config.RCntFix = 0;
@@ -1452,6 +1484,9 @@ static MENUITEM gui_SettingsItems[] = {
 	{(char *)"Skip BIOS logos    ", NULL, &SlowBoot_alter, &SlowBoot_show, &SlowBoot_hint},
 	{(char *)"Map L-stick to Dpad", NULL, &AnalogArrow_alter, &AnalogArrow_show, &AnalogArrow_hint},
 	{(char *)"Analog Mode        ", NULL, &Analog_Mode_alter, &Analog_Mode_show, &Analog_Mode_hint},
+#ifdef RUMBLE
+	{(char *)"Rumble Strength    ", NULL, &RumbleGain_alter, &RumbleGain_show, NULL},
+#endif
 	{(char *)"Menu Toggle Combo  ", NULL, &MenuToggleCombo_alter, &MenuToggleCombo_show, &MenuToggleCombo_hint},
 #ifndef __WIN32__
 	{(char *)"CD Access          ", NULL, &AsyncCD_alter, &AsyncCD_show, &AsyncCD_hint},
