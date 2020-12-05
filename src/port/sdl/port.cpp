@@ -956,12 +956,13 @@ void pad_update()
 		// automatically, displaying message that write is in progress.
 		sioSyncMcds();
 
-		/* Disable any rumble effects */
-		trigger_rumble(0, 0);
-
 		emu_running = false;
 		pl_pause();    // Tell plugin_lib we're pausing emu
 		update_window_size(320, 240, false);
+
+		/* Disable any rumble effects */
+		trigger_rumble(0, 0);
+
 		GameMenu();
 		emu_running = true;
 		pad1_buttons |= (1 << DKEY_SELECT) | (1 << DKEY_START) | (1 << DKEY_CROSS);
@@ -1210,6 +1211,28 @@ int trigger_rumble(uint8_t low, uint8_t high)
 	/* If strength has changed, update effect */
 	if ((low != joypad_rumble.low) || (high != joypad_rumble.high)) {
 		int id;
+
+		/* Workaround for an inexplicable bug:
+		 * - We are supposed to be able to change rumble
+		 *   strength dynamically, without stopping a
+		 *   currently running effect
+		 * - This works in most cases, but:
+		 * - If the effect is currently running with
+		 *   *both* low and high at a non-zero value and
+		 *   we change one of them to a zero value (or vice
+		 *   versa), then the next Shake_Stop() will fail
+		 *   without error, causing the rumble effect to
+		 *   continue indefinitely
+		 * - We therefore have to manually stop the running
+		 *   effect in this case, before uploading the new
+		 *   settings... :( */
+		if (joypad_rumble.active && ((low && high) != (joypad_rumble.low && joypad_rumble.high))) {
+			if (Shake_Stop(joypad_rumble.device, joypad_rumble.id) == SHAKE_OK) {
+				joypad_rumble.active = false;
+			} else {
+				return 0;
+			}
+		}
 
 		joypad_rumble.effect.id                       = joypad_rumble.id;
 		joypad_rumble.effect.u.rumble.weakMagnitude   = low ? RUMBLE_WEAK_MAGNITUDE : 0x0;
