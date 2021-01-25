@@ -732,7 +732,17 @@ static struct {
 	{ SDLK_DOWN,		DKEY_DOWN },
 	{ SDLK_LEFT,		DKEY_LEFT },
 	{ SDLK_RIGHT,		DKEY_RIGHT },
-#ifdef GCW_ZERO
+#ifdef PG2
+	{ SDLK_LSHIFT,		DKEY_SQUARE },
+	{ SDLK_LCTRL,		DKEY_CIRCLE },
+	{ SDLK_SPACE,		DKEY_TRIANGLE },
+	{ SDLK_LALT,		DKEY_CROSS },
+	{ SDLK_TAB,			DKEY_L1 },
+	{ SDLK_BACKSPACE,	DKEY_R1 },
+	{ SDLK_RSHIFT,		DKEY_L2 },
+	{ SDLK_RALT,	    DKEY_R2 },
+	{ SDLK_ESCAPE,		DKEY_SELECT },
+#elif RG350
 	{ SDLK_LSHIFT,		DKEY_SQUARE },
 	{ SDLK_LCTRL,		DKEY_CIRCLE },
 	{ SDLK_SPACE,		DKEY_TRIANGLE },
@@ -741,9 +751,19 @@ static struct {
 	{ SDLK_BACKSPACE,	DKEY_R1 },
 	{ SDLK_PAGEUP,		DKEY_L2 },
 	{ SDLK_PAGEDOWN,	DKEY_R2 },
+#ifdef PG2V2
+#else
 	{ SDLK_KP_DIVIDE,	DKEY_L3 },
 	{ SDLK_KP_PERIOD,	DKEY_R3 },
+#endif
 	{ SDLK_ESCAPE,		DKEY_SELECT },
+#elif GCW_ZERO
+	{ SDLK_LSHIFT,		DKEY_SQUARE },
+	{ SDLK_LCTRL,		DKEY_CIRCLE },
+	{ SDLK_SPACE,		DKEY_TRIANGLE },
+	{ SDLK_LALT,		DKEY_CROSS },
+	{ SDLK_TAB,			DKEY_L1 },
+	{ SDLK_BACKSPACE,	DKEY_R1 },
 #else
 	{ SDLK_a,		DKEY_SQUARE },
 	{ SDLK_x,		DKEY_CIRCLE },
@@ -814,18 +834,23 @@ void joy_init()
 
 	player_controller[0].joy_left_ax0 = 127;
 	player_controller[0].joy_left_ax1 = 127;
-	player_controller[0].joy_right_ax0 = 127;
-	player_controller[0].joy_right_ax1 = 127;
-
+#ifdef PG2
+	player_controller[0].id = 0x41;
+	player_controller[0].pad_mode = 0;
+	player_controller[0].pad_controllertype = 0;
+#else
 	player_controller[0].Vib[0] = 0;
 	player_controller[0].Vib[1] = 0;
 	player_controller[0].VibF[0] = 0;
 	player_controller[0].VibF[1] = 0;
 
-	//player_controller[0].id = 0x41;
-	//player_controller[0].pad_mode = 0;
-	//player_controller[0].pad_controllertype = 0;
-
+	player_controller[0].id = 0x41;
+	player_controller[0].pad_mode = 0;
+	player_controller[0].pad_controllertype = 0;
+	player_controller[0].joy_right_ax0 = 127;
+	player_controller[0].joy_right_ax1 = 127;
+#endif
+	
 	player_controller[0].configmode = 0;
 
 	Set_Controller_Mode();
@@ -855,8 +880,14 @@ void pad_update()
 			break;
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym) {
+#ifdef PG2
+			case SDLK_RCTRL:
+#elif PG2V2
+			case SDLK_RCTRL:
+#else
 			case SDLK_HOME:
 			case SDLK_F10:
+#endif
 				popup_menu = true;
 				break;
 #ifndef GCW_ZERO
@@ -897,6 +928,9 @@ void pad_update()
 					player_controller[0].joy_left_ax1 = (axisval + 0x8000) >> 8;
 				}
 				break;
+#ifdef PG2
+#elif PG2V2
+#else
 			case 2: /* X axis */
 				axisval = event.jaxis.value;
 				player_controller[0].joy_right_ax0 = (axisval + 0x8000) >> 8;
@@ -905,8 +939,12 @@ void pad_update()
 				axisval = event.jaxis.value;
 				player_controller[0].joy_right_ax1 = (axisval + 0x8000) >> 8;
 				break;
+#endif
 			}
 			break;
+#ifdef PG2
+#elif PG2V2
+#else
 		case SDL_JOYBUTTONDOWN:
 			if (event.jbutton.which == 0) {
 				pad1_buttons |= (1 << DKEY_L3);
@@ -914,10 +952,60 @@ void pad_update()
 				pad1_buttons |= (1 << DKEY_R3);
 			}
 			break;
+#endif
 		default: break;
 		}
 	}
+	
+#if defined(GCW_ZERO) && !defined(RG350) && !defined(PG2)
+	// SELECT+B for psx's SELECT
+	if (keys[SDLK_ESCAPE] && keys[SDLK_LALT]) {
+		pad1 &= ~(1 << DKEY_SELECT);
+		pad1 |= (1 << DKEY_CROSS);
+	} else {
+		pad1 |= (1 << DKEY_SELECT);
+	}
 
+	// SELECT+L1 for psx's L2
+	if (keys[SDLK_ESCAPE] && keys[SDLK_TAB]) {
+		pad1 &= ~(1 << DKEY_L2);
+		pad1 |= (1 << DKEY_L1);
+	} else {
+		pad1 |= (1 << DKEY_L2);
+	}
+
+	// SELECT+R1 for R2
+	if (keys[SDLK_ESCAPE] && keys[SDLK_BACKSPACE]) {
+		pad1 &= ~(1 << DKEY_R2);
+		pad1 |= (1 << DKEY_R1);
+	} else {
+		pad1 |= (1 << DKEY_R2);
+	}
+
+	// SELECT+START for menu
+	if (keys[SDLK_ESCAPE] && keys[SDLK_RETURN] && !keys[SDLK_LALT]) {
+		//Sync and close any memcard files opened for writing
+		//TODO: Disallow entering menu until they are synced/closed
+		// automatically, displaying message that write is in progress.
+		sioSyncMcds();
+
+		emu_running = false;
+		pl_pause();    // Tell plugin_lib we're pausing emu
+		GameMenu();
+		emu_running = true;
+		pad1 |= (1 << DKEY_START);
+		pad1 |= (1 << DKEY_CROSS);
+		video_clear();
+		video_flip();
+		video_clear();
+#ifdef SDL_TRIPLEBUF
+		video_flip();
+		video_clear();
+#endif
+		pl_resume();    // Tell plugin_lib we're reentering emu
+	}
+#endif
+	
 	if (Config.AnalogArrow == 1) {
 		if ((pad1_buttons & (1 << DKEY_UP)) && (analog1 & ANALOG_UP)) {
 			pad1_buttons &= ~(1 << DKEY_UP);
