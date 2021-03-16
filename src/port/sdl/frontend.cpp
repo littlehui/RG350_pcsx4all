@@ -2202,9 +2202,9 @@ static void ShowMenu(MENU *menu)
 	port_printf(menu->x - 3 * 8, menu->y + cur * 10, "-->");
 
 	// general copyrights info
-#if defined(RG350)&&!defined(PG2V2)
+#if defined(RG350) && !defined(PG2V2)
 	port_printf(8 * 8, 10, "pcsx4all 2.4 for RG350");
-#elif defined(RG350)&&defined(PG2V2)
+#elif defined(RG350) && defined(PG2V2)
 	port_printf(8 * 8, 10, "pcsx4all 2.4 for POCKETGO2 v2");
 #elif defined(PG2)
 	port_printf(8 * 8, 10, "pcsx4all 2.4 for POCKETGO2");
