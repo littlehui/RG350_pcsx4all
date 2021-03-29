@@ -297,8 +297,8 @@ static void recDIV()
 	if (rt_const)
 	{
 		// Check rs_const before using rs_val value here!
-		u32 rs_val = GetConst(_Rs_);
-		u32 rt_val = GetConst(_Rt_);
+		s32 rs_val = GetConst(_Rs_);
+		s32 rt_val = GetConst(_Rt_);
 
 		if (!rt_val) {
 			// If divisor operand is const 0:
@@ -391,8 +391,8 @@ static void recDIV()
 	}
 #endif // USE_CONST_DIV_OPTIMIZATIONS
 
-	u32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
-	u32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
+	s32 rs = regMipsToHost(_Rs_, REG_LOAD, REG_REGISTER);
+	s32 rt = regMipsToHost(_Rt_, REG_LOAD, REG_REGISTER);
 
 	// Test if divisor is 0, emulating correct results for PS1 CPU.
 	// NOTE: we don't bother checking for signed division overflow (the

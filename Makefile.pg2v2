@@ -66,7 +66,7 @@ else
 	C_ARCH  += -mno-check-zero-division
 endif
 
-CFLAGS := $(C_ARCH) -mplt -mno-shared -ggdb3 -O4 -fexpensive-optimizations -flto -DUSE_BGR15 -DTIME_IN_MSEC \
+CFLAGS := $(C_ARCH) -mplt -mno-shared -O4 -fexpensive-optimizations -flto -DUSE_BGR15 -DTIME_IN_MSEC \
 	-Wall -Wunused -Wpointer-arith \
 	-Wno-sign-compare -Wno-cast-align \
 	-Isrc -Isrc/spu/$(SPU) -D$(SPU) -Isrc/gpu/$(GPU) \
@@ -78,7 +78,9 @@ CFLAGS := $(C_ARCH) -mplt -mno-shared -ggdb3 -O4 -fexpensive-optimizations -flto
 	-DINLINE="static __inline__" -Dasm="__asm__ __volatile__" \
 	$(SDL_CFLAGS)
 
-ifeq ($(DEV),)
+ifeq ($(DEV),1)
+	CFLAGS += -ggdb3
+else
 	CFLAGS += -ffunction-sections -fdata-sections -flto
 endif
 

@@ -30,6 +30,7 @@ TOOLCHAIN_DIR := /opt/gcw0-toolchain/usr/bin
 CC     = $(TOOLCHAIN_DIR)/mipsel-linux-gcc
 CXX    = $(TOOLCHAIN_DIR)/mipsel-linux-g++
 LD     = $(TOOLCHAIN_DIR)/mipsel-linux-g++
+HUGEEDIT = /opt/gcw0-toolchain/bin/hugeedit
 
 SYSROOT     := $(shell $(CC) --print-sysroot)
 SDL_CONFIG  := $(SYSROOT)/usr/bin/sdl-config
@@ -39,9 +40,9 @@ SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
 LDFLAGS := $(SDL_LIBS) -lSDL_mixer -lSDL_image -lrt -lz
 
 ifdef A320
-	C_ARCH = -mips32 -msoft-float -DGCW_ZERO -DDYNAREC_SKIP_DCACHE_FLUSH -DTMPFS_MIRRORING -DTMPFS_DIR=\"/tmp\"
+	C_ARCH = -mno-memcpy -mips32 -msoft-float -DGCW_ZERO -DRG350 -DDINGUX_BETA -DDYNAREC_SKIP_DCACHE_FLUSH -DTMPFS_MIRRORING -DTMPFS_DIR=\"/tmp\"
 else
-	C_ARCH = -mips32r2 -DGCW_ZERO -DRUMBLE -DPG2 -DSHMEM_MIRRORING
+	C_ARCH = -mno-memcpy -mips32r2 -DGCW_ZERO -DRUMBLE -DRG350 -DDINGUX_BETA -DSHMEM_MIRRORING
 endif
 
 ifeq ($(DEV),1)
@@ -65,6 +66,8 @@ else
 	# Furthermore, div-by-zero checks are disabled (helps software rendering)
 	C_ARCH  += -mno-check-zero-division
 endif
+
+LDFLAGS += -zcommon-page-size=2097152 -zmax-page-size=2097152 -lhugetlbfs
 
 CFLAGS := $(C_ARCH) -mplt -mno-shared -O4 -fexpensive-optimizations -flto -DUSE_BGR15 -DTIME_IN_MSEC \
 	-Wall -Wunused -Wpointer-arith \
@@ -268,6 +271,7 @@ endif
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...
 	$(HIDECMD)$(LD) $(OBJS) $(LDFLAGS) -o $@
+	$(HIDECMD)$(HUGEEDIT) --text --data $(TARGET)
 	@echo
 ifeq ($(DEV),1)
 	@echo "-> WARNING: This is a development build.                                  "

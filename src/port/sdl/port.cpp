@@ -11,6 +11,10 @@
 #include "cheat.h"
 #include <SDL.h>
 
+#if defined(DINGUX_BETA)
+#include <stdlib.h>
+#endif
+
 /* PATH_MAX inclusion */
 #ifdef __MINGW32__
 #include <limits.h>
@@ -97,12 +101,19 @@ void update_window_size(int w, int h, bool ntsc_fix);
 #define DINGUX_SHARPNESS_UPSCALING_FILE   "/sys/devices/platform/jz-lcd.0/sharpness_upscaling"
 #define DINGUX_SHARPNESS_DOWNSCALING_FILE "/sys/devices/platform/jz-lcd.0/sharpness_downscaling"
 
+#define DINGUX_SCALING_MODE_ENVAR         "SDL_VIDEO_KMSDRM_SCALING_MODE"
+#define DINGUX_SCALING_SHARPNESS_ENVAR    "SDL_VIDEO_KMSDRM_SCALING_SHARPNESS"
+
 void set_ipu_keep_aspect_ratio(bool n) {
+#if defined(DINGUX_BETA)
+	setenv(DINGUX_SCALING_MODE_ENVAR, n ? "1" : "0", 1);
+#else
 	FILE *keep_aspect_file = fopen(DINGUX_KEEP_ASPECT_FILE, "wb");
 	if (keep_aspect_file) {
 		fputs(n ? "1" : "0", keep_aspect_file);
 		fclose(keep_aspect_file);
 	}
+#endif
 }
 
 void set_ipu_filter_type(enum ipu_filter_type filter_type)
@@ -115,8 +126,10 @@ void set_ipu_filter_type(enum ipu_filter_type filter_type)
 	 * Default bicubic sharpness factor is
 	 * (-0.125 * 8) = -1.0 */
 	const char *sharpness_str        = "8";
+#if !defined(DINGUX_BETA)
 	FILE *sharpness_upscaling_file   = NULL;
 	FILE *sharpness_downscaling_file = NULL;
+#endif
 
 	/* Check filter type */
 	switch (filter_type)	{
@@ -133,6 +146,9 @@ void set_ipu_filter_type(enum ipu_filter_type filter_type)
 		break;
 	}
 
+#if defined(DINGUX_BETA)
+	setenv(DINGUX_SCALING_SHARPNESS_ENVAR, sharpness_str, 1);
+#else
 	/* Set upscaling sharpness */
 	sharpness_upscaling_file = fopen(DINGUX_SHARPNESS_UPSCALING_FILE, "wb");
 	if (sharpness_upscaling_file) {
@@ -146,6 +162,18 @@ void set_ipu_filter_type(enum ipu_filter_type filter_type)
 		fputs(sharpness_str, sharpness_downscaling_file);
 		fclose(sharpness_downscaling_file);
 	}
+#endif
+}
+
+void reset_ipu(void)
+{
+#if defined(DINGUX_BETA)
+	unsetenv(DINGUX_SCALING_MODE_ENVAR);
+	unsetenv(DINGUX_SCALING_SHARPNESS_ENVAR);
+#else
+	set_ipu_keep_aspect_ratio(true);
+	set_ipu_filter_type(IPU_FILTER_BICUBIC);
+#endif
 }
 
 #endif
@@ -258,12 +286,16 @@ static void pcsx4all_exit(void)
 #ifdef GCW_ZERO
 	/* It is good manners to leave IPU scaling in
 	 * the default state when quitting an application */
+#if defined(DINGUX_BETA)
+	reset_ipu();
+#else
 	if (!Config.VideoHwKeepAspect) {
 		set_ipu_keep_aspect_ratio(true);
 	}
 	if ((enum ipu_filter_type)Config.VideoHwFilter != IPU_FILTER_BICUBIC) {
 		set_ipu_filter_type(IPU_FILTER_BICUBIC);
 	}
+#endif
 #endif
 
 	if (SDL_MUSTLOCK(screen))
