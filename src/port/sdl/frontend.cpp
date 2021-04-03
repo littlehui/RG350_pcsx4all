@@ -1181,7 +1181,7 @@ static char *SlowBoot_show()
 
 static void SlowBoot_hint()
 {
-	port_printf(7 * 8, 10 * 8, "Skip BIOS logos at startup");
+	port_printf(6 * 8, 10 * 6, "Skip BIOS logos at startup");
 }
 
 static int SlowBoot_alter(u32 keys)
@@ -1208,7 +1208,7 @@ static int AnalogArrow_alter(u32 keys)
 
 static void AnalogArrow_hint()
 {
-	port_printf(6 * 8, 10 * 8, "Analog Stick -> Arrow Keys");
+	port_printf(6 * 8, 10 * 6, "Analog Stick -> Arrow Keys");
 }
 
 static char* AnalogArrow_show()
@@ -1232,7 +1232,7 @@ static int Analog_Mode_alter(u32 keys)
 
 static void Analog_Mode_hint()
 {
-	port_printf(6 * 8, 10 * 8, "Analog Mode");
+	port_printf(6 * 8, 10 * 6, "Analog Mode");
 }
 
 static char* Analog_Mode_show()
@@ -1295,7 +1295,7 @@ static int MenuToggleCombo_alter(u32 keys)
 
 static void MenuToggleCombo_hint()
 {
-	port_printf(6 * 8, 10 * 8, "POWER button also opens menu");
+	port_printf(6 * 8, 10 * 6, "POWER button also opens menu");
 }
 
 static char* MenuToggleCombo_show()
@@ -1333,7 +1333,7 @@ static char *AsyncCD_show()
 }
 
 static void AsyncCD_hint() {
-	port_printf(2 * 8, 10 * 8, "Async: Reduce stutter (restart req.)");
+	port_printf(2 * 8, 10 * 6, "Async: Reduce stutter (restart req.)");
 }
 
 #endif
@@ -1358,7 +1358,7 @@ static char *RCntFix_show()
 
 static void RCntFix_hint()
 {
-	port_printf(2 * 8 - 4, 10 * 8, "Parasite Eve 2, Vandal Hearts 1/2 Fix");
+	port_printf(2 * 8 - 4, 10 * 6, "Parasite Eve 2, Vandal Hearts 1/2 Fix");
 }
 
 static int VSyncWA_alter(u32 keys)
@@ -1374,7 +1374,7 @@ static int VSyncWA_alter(u32 keys)
 
 static void VSyncWA_hint()
 {
-	port_printf(6 * 8, 10 * 8, "InuYasha Sengoku Battle Fix");
+	port_printf(6 * 8, 10 * 6, "InuYasha Sengoku Battle Fix");
 }
 
 static char *VSyncWA_show()
@@ -1495,12 +1495,12 @@ static MENUITEM gui_SettingsItems[] = {
 	{(char *)"VSyncWA            ", NULL, &VSyncWA_alter, &VSyncWA_show, &VSyncWA_hint},
 	{(char *)"Memory card Slot1  ", NULL, &McdSlot1_alter, &McdSlot1_show, NULL},
 	{(char *)"Memory card Slot2  ", NULL, &McdSlot2_alter, &McdSlot2_show, NULL},
-	{(char *)"Restore defaults     ", &settings_defaults, NULL, NULL, NULL},
+	{(char *)"Restore defaults   ", &settings_defaults, NULL, NULL, NULL},
 	{0}
 };
 
 #define SET_SIZE ((sizeof(gui_SettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_SettingsMenu = { SET_SIZE, 0, 56, 102, (MENUITEM *)&gui_SettingsItems };
+static MENU gui_SettingsMenu = { SET_SIZE, 0, 56, 82, (MENUITEM *)&gui_SettingsItems };
 
 static int fps_alter(u32 keys)
 {
