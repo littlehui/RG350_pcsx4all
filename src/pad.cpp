@@ -89,7 +89,7 @@ static uint8_t stdmodel[8] = {
 };
 
 unsigned char PAD1_poll(unsigned char value) {
-	static uint8_t *buf;
+	static uint8_t buf[8] = {0xFF, 0x5A, 0xFF, 0xFF, 0x80, 0x80, 0x80, 0x80};
 	if (g.CurByte1 == 0) {
 		uint16_t n;
 
@@ -105,34 +105,28 @@ unsigned char PAD1_poll(unsigned char value) {
 		g.CmdLen1 = 8;
 
 		switch (CurCmd) {
-		case CMD_SET_MODE_AND_LOCK: 
-			buf = stdmode;
+		case CMD_SET_MODE_AND_LOCK: memcpy(buf, stdmode, 8);
 			return 0xF3;
-		case CMD_QUERY_MODEL_AND_MODE: 
-			buf = stdmodel;
+		case CMD_QUERY_MODEL_AND_MODE: memcpy(buf, stdmodel, 8);
 			buf[4] = player_controller[0].pad_mode;
 			return 0xF3;
-		case CMD_QUERY_ACT: 
-			buf = unk46;
+		case CMD_QUERY_ACT: memcpy(buf, unk46, 8);
 			return 0xF3;
-		case CMD_QUERY_COMB: 
-			buf = unk47;
+		case CMD_QUERY_COMB: memcpy(buf, unk47, 8);
 			return 0xF3;
-		case CMD_QUERY_MODE: 
-			buf = unk4c;
+		case CMD_QUERY_MODE: memcpy(buf, unk4c, 8);
 			return 0xF3;
-		case CMD_VIBRATION_TOGGLE: 
-			buf = unk4d;
+		case CMD_VIBRATION_TOGGLE: memcpy(buf, unk4d, 8);
 			return 0xF3;
 		case CMD_CONFIG_MODE:
 			if (player_controller[0].configmode) {
-				buf = stdcfg;
+				memcpy(buf, stdcfg, 8);
 				return 0xF3;
 			}
 			// else FALLTHROUGH
 		case CMD_READ_DATA_AND_VIBRATE:
 		default:
-			buf = stdpar;
+
 			buf[2] = n & 0xFF;
 			buf[3] = n >> 8;
 
