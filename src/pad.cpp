@@ -63,21 +63,13 @@ unsigned char PAD2_startPoll()
 	return 0xFF;
 }
 
-static uint8_t stdpar[8] = 	{0xFF, 0x5A, 0xFF, 0xFF, 0x80, 0x80, 0x80, 0x80};
-
-static uint8_t unk46[8] = {0xFF, 0x5A, 0x00, 0x00, 0x01, 0x02, 0x00, 0x0A};
-
-static uint8_t unk47[8] = {0xFF, 0x5A, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00};
-
-static uint8_t unk4c[8] = {0xFF, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-static uint8_t unk4d[8] = {0xFF, 0x5A, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-static uint8_t stdmode[8] = {0xFF, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-static uint8_t stdcfg[8] = {0xFF, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-static uint8_t stdmodel[8] = {
+static const uint8_t unk46[8]    = {0xFF, 0x5A, 0x00, 0x00, 0x01, 0x02, 0x00, 0x0A};
+static const uint8_t unk47[8]    = {0xFF, 0x5A, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00};
+static const uint8_t unk4c[8]    = {0xFF, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t unk4d[8]    = {0xFF, 0x5A, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+static const uint8_t stdmode[8]  = {0xFF, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t stdcfg[8]   = {0xFF, 0x5A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t stdmodel[8] = {
 		0xFF,
 		0x5A,
 		0x01, // 03 - dualshock2, 01 - dualshock
@@ -95,7 +87,6 @@ unsigned char PAD1_poll(unsigned char value) {
 
 		n = pad_read(0);
 
-
 		// Don't enable Analog/Vibration for a Digital or DualAnalog controller
 		CurCmd = value;
 		g.CurByte1++;
@@ -105,22 +96,28 @@ unsigned char PAD1_poll(unsigned char value) {
 		g.CmdLen1 = 8;
 
 		switch (CurCmd) {
-		case CMD_SET_MODE_AND_LOCK: memcpy(buf, stdmode, 8);
+		case CMD_SET_MODE_AND_LOCK:
+			memcpy(buf, stdmode, sizeof(buf));
 			return 0xF3;
-		case CMD_QUERY_MODEL_AND_MODE: memcpy(buf, stdmodel, 8);
+		case CMD_QUERY_MODEL_AND_MODE:
+			memcpy(buf, stdmodel, sizeof(buf));
 			buf[4] = player_controller[0].pad_mode;
 			return 0xF3;
-		case CMD_QUERY_ACT: memcpy(buf, unk46, 8);
+		case CMD_QUERY_ACT:
+			memcpy(buf, unk46, sizeof(buf));
 			return 0xF3;
-		case CMD_QUERY_COMB: memcpy(buf, unk47, 8);
+		case CMD_QUERY_COMB:
+			memcpy(buf, unk47, sizeof(buf));
 			return 0xF3;
-		case CMD_QUERY_MODE: memcpy(buf, unk4c, 8);
+		case CMD_QUERY_MODE:
+			memcpy(buf, unk4c, sizeof(buf));
 			return 0xF3;
-		case CMD_VIBRATION_TOGGLE: memcpy(buf, unk4d, 8);
+		case CMD_VIBRATION_TOGGLE:
+			memcpy(buf, unk4d, sizeof(buf));
 			return 0xF3;
 		case CMD_CONFIG_MODE:
 			if (player_controller[0].configmode) {
-				memcpy(buf, stdcfg, 8);
+				memcpy(buf, stdcfg, sizeof(buf));
 				return 0xF3;
 			}
 			// else FALLTHROUGH
