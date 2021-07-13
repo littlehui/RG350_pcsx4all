@@ -39,8 +39,8 @@ int LoadPlugins(void) {
 	/* If we are using per-disk memory cards, defer
 	 * loading until after the disk ID has been determined */
 	if ((Config.McdSlot1 != 0) && (Config.McdSlot2 != 0)) {
-		LoadMcd(MCD1, (char*)GetMemcardPath(1)); //Memcard 1
-		LoadMcd(MCD2, (char*)GetMemcardPath(2)); //Memcard 2
+		LoadMcd(MCD1, GetMemcardPath(1)); //Memcard 1
+		LoadMcd(MCD2, GetMemcardPath(2)); //Memcard 2
 	}
 
 	ret = CDR_init();
