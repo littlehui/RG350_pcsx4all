@@ -1132,19 +1132,29 @@ void video_clear_cache()
 #endif
 }
 
-const char *GetMemcardPath(int slot) {
+char *GetMemcardPath(int slot) {
 	switch(slot) {
 	case 1:
-		return McdPath1;
+		if (Config.McdSlot1 == -1) {
+			return NULL;
+		} else {
+			return McdPath1;
+		}
 	case 2:
-		return McdPath2;
+		if (Config.McdSlot2 == -1) {
+			return NULL;
+		} else {
+			return McdPath2;
+		}
 	}
 	return NULL;
 }
 
 void update_memcards(int load_mcd) {
 
-	if (Config.McdSlot1 == 0) {
+	if (Config.McdSlot1 == -1) {
+		McdPath1[0] = '\0';
+	} else if (Config.McdSlot1 == 0) {
 		if (string_is_empty(CdromId)) {
 			/* Fallback */
 			sprintf(McdPath1, "%s/%s", memcardsdir, "card1.mcd");
@@ -1155,7 +1165,9 @@ void update_memcards(int load_mcd) {
 		sprintf(McdPath1, "%s/mcd%03d.mcr", memcardsdir, (int)Config.McdSlot1);
 	}
 
-	if (Config.McdSlot2 == 0) {
+	if (Config.McdSlot2 == -1) {
+		McdPath2[0] = '\0';
+	} else if (Config.McdSlot2 == 0) {
 		if (string_is_empty(CdromId)) {
 			/* Fallback */
 			sprintf(McdPath2, "%s/%s", memcardsdir, "card2.mcd");
@@ -1167,9 +1179,9 @@ void update_memcards(int load_mcd) {
 	}
 
 	if (load_mcd & 1)
-		LoadMcd(MCD1, McdPath1); //Memcard 1
+		LoadMcd(MCD1, GetMemcardPath(1)); //Memcard 1
 	if (load_mcd & 2)
-		LoadMcd(MCD2, McdPath2); //Memcard 2
+		LoadMcd(MCD2, GetMemcardPath(2)); //Memcard 2
 }
 
 const char *bios_file_get() {
@@ -2004,8 +2016,8 @@ int main (int argc, char **argv)
 	 * them now */
 	if ((Config.McdSlot1 == 0) || (Config.McdSlot2 == 0)) {
 		update_memcards(0);
-		LoadMcd(MCD1, (char*)GetMemcardPath(1)); //Memcard 1
-		LoadMcd(MCD2, (char*)GetMemcardPath(2)); //Memcard 2
+		LoadMcd(MCD1, GetMemcardPath(1)); //Memcard 1
+		LoadMcd(MCD2, GetMemcardPath(2)); //Memcard 2
 	}
 
 	Rumble_Init();

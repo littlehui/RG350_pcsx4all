@@ -1389,12 +1389,12 @@ static int McdSlot1_alter(u32 keys)
 	int slot = Config.McdSlot1;
 	if (keys & KEY_RIGHT)
 	{
-		if (++slot > 15) slot = 0;
+		if (++slot > 16) slot = -1;
 	}
 	else
 	if (keys & KEY_LEFT)
 	{
-		if (--slot < 0) slot = 15;
+		if (--slot < -1) slot = 16;
 	}
 	Config.McdSlot1 = slot;
 	update_memcards(1);
@@ -1404,7 +1404,9 @@ static int McdSlot1_alter(u32 keys)
 static char *McdSlot1_show()
 {
 	static char buf[32] = "\0";
-	if (Config.McdSlot1 == 0) {
+	if (Config.McdSlot1 == -1) {
+		strcpy(buf, "empty");
+	} else if (Config.McdSlot1 == 0) {
 		if (string_is_empty(CdromId)) {
 			strcpy(buf, "per-disk");
 		} else {
@@ -1421,12 +1423,12 @@ static int McdSlot2_alter(u32 keys)
 	int slot = Config.McdSlot2;
 	if (keys & KEY_RIGHT)
 	{
-		if (++slot > 16) slot = 0;
+		if (++slot > 16) slot = -1;
 	}
 	else
 	if (keys & KEY_LEFT)
 	{
-		if (--slot < 0) slot = 16;
+		if (--slot < -1) slot = 16;
 	}
 	Config.McdSlot2 = slot;
 	update_memcards(2);
@@ -1436,7 +1438,9 @@ static int McdSlot2_alter(u32 keys)
 static char *McdSlot2_show()
 {
 	static char buf[32] = "\0";
-	if (Config.McdSlot2 == 0) {
+	if (Config.McdSlot2 == -1) {
+		strcpy(buf, "empty");
+	} else if (Config.McdSlot2 == 0) {
 		if (string_is_empty(CdromId)) {
 			strcpy(buf, "per-disk");
 		} else {

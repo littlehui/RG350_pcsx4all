@@ -200,6 +200,6 @@ s64 GetCdOpenCaseTime(void);
 int ReloadCdromPlugin();
 
 // Memcard functions
-const char *GetMemcardPath(int slot);
+char *GetMemcardPath(int slot);
 
 #endif /* __PLUGINS_H__ */
