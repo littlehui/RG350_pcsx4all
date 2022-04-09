@@ -7,31 +7,27 @@
 #include <time.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
-#include "sal.h" //SDL_Surface *mScreen = NULL;
 #include "port.h"
-#include "cheats.h"
-#include "cjs.h"
-#include "cjs_sdl.h"
 
-extern SDL_Surface *mScreen;
+#include "cjs.h"
+
 
 typedef uint32_t u32;
 typedef int32_t  s32;
 typedef uint16_t u16;
 typedef int16_t  s16;
 typedef uint8_t  u8;
-typedef char     s8;
+//typedef char     s8;
 
 
 
 int InitFont();
 void KillFont();
-int SFC_Get_SCREEN();
 void draw_bg(SDL_Surface *bg);                       //设置背景
 void DrawText2(const char *textmsg, int x, int y);   //SDL_ttf
 void DrawText3(const char *textmsg, int x, int y);   //内存操作不刷新
-void SFC_Flip();                                     //刷新显示
-void SDL_TEST();
+void DrawText(const char *textmsg, int x, int y, SDL_Surface *surface);   //内存操作不刷新
+
 //void str_log(char *info,char *log);
 void str_log(char *info);
 

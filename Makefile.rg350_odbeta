@@ -26,11 +26,11 @@ RECOMPILER = mips
 RM     = rm -f
 MD     = mkdir -p
 
-TOOLCHAIN_DIR := /opt/gcw0-toolchain/usr/bin
+TOOLCHAIN_DIR := /opt/gcw0-toolchain-beta/usr/bin
 CC     = $(TOOLCHAIN_DIR)/mipsel-linux-gcc
 CXX    = $(TOOLCHAIN_DIR)/mipsel-linux-g++
 LD     = $(TOOLCHAIN_DIR)/mipsel-linux-g++
-HUGEEDIT = /opt/gcw0-toolchain/bin/hugeedit
+HUGEEDIT = /opt/gcw0-toolchain-beta/bin/hugeedit
 
 SYSROOT     := $(shell $(CC) --print-sysroot)
 SDL_CONFIG  := $(SYSROOT)/usr/bin/sdl-config
@@ -84,7 +84,7 @@ CFLAGS := $(C_ARCH) -mplt -mno-shared -O4 -fexpensive-optimizations -flto -DUSE_
 ifeq ($(DEV),1)
 	CFLAGS += -ggdb3
 else
-	CFLAGS += -ffunction-sections -fdata-sections -flto
+	CFLAGS += -ffunction-sections -fdata-sections -flto -lSDL_ttf
 endif
 
 # Convert plugin names to uppercase and make them CFLAG defines
@@ -145,6 +145,8 @@ OBJS += obj/spu/$(SPU)/spu.o
 
 OBJS += obj/port/$(PORT)/port.o
 OBJS += obj/port/$(PORT)/frontend.o
+OBJS += obj/port/$(PORT)/cjs.o
+OBJS += obj/port/$(PORT)/cjs_font.o
 
 OBJS += obj/plugin_lib/perfmon.o
 
