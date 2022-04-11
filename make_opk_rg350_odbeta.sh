@@ -1,5 +1,5 @@
 #!/bin/sh
-sudo ./translations/update
+
 make -f Makefile.rg350_odbeta
 TOOLCHAIN_DIR="/opt/gcw0-toolchain/usr/bin"
 OPK_NAME=pcsx4all_rg350_odbeta_littlehui.opk
@@ -21,15 +21,10 @@ X-OD-NeedsDownscaling=true
 EOF
 
 # create opk
-FLIST="pcsx4all"
+FLIST="pcsx4all Zpix.ttf"
 FLIST="${FLIST} default.gcw0.desktop"
 FLIST="${FLIST} src/port/sdl/pcsxr-icon-small.png"
-if [ -f translations/locales ]; then
-  FLIST="${FLIST} translations/locales"
-  if [ -d locale ]; then
-    FLIST="${FLIST} locale"
-  fi
-fi
+
 rm -f ${OPK_NAME}
 ${TOOLCHAIN_DIR}/mksquashfs ${FLIST} ${OPK_NAME} -all-root -no-xattrs -noappend -no-exports
 

@@ -10,6 +10,7 @@
 #include "perfmon.h"
 #include "cheat.h"
 #include <SDL.h>
+#include "ttf.h"
 
 #if defined(DINGUX_BETA)
 #include <stdlib.h>
@@ -33,13 +34,6 @@
 #ifdef GPU_UNAI
 #include "gpu/gpu_unai/gpu.h"
 #endif
-
-#include "ttf.h"
-#include "i18n.h"
-
-#include <libintl.h>
-
-#define _(s) gettext(s)
 
 #ifdef RUMBLE
 #include "libShake/include/shake.h"
@@ -95,8 +89,6 @@ enum {
 #endif
 
 static TTF::Font *ttf_font = NULL;
-I18n i18n;
-int language_index = 0;
 
 static SDL_Surface *screen;
 unsigned short *SCREEN;
@@ -462,16 +454,7 @@ int config_load(const char *diskname)
 			break;
 		}
 
-		if (!strcmp(line, "Language")) {
-			int len = strlen(arg);
-			if (len == 0 || len > sizeof(Config.Language) - 1) {
-				continue;
-			}
-			if (arg[len-1] == '\n') {
-				arg[len-1] = '\0';
-			}
-			strcpy(Config.Language, arg);
-		} else if (!strcmp(line, "Xa")) {
+		if (!strcmp(line, "Xa")) {
 			sscanf(arg, "%d", &value);
 			Config.Xa = value;
 		} else if (!strcmp(line, "Mdec")) {
@@ -680,7 +663,6 @@ int config_save(const char *diskname)
 	}
 
 	fprintf(f, "CONFIG_VERSION %d\n"
-		   "Language %s\n"
 		   "Xa %d\n"
 		   "Mdec %d\n"
 		   "PsxAuto %d\n"
@@ -1401,7 +1383,8 @@ void trigger_rumble(uint8_t low, uint8_t high) {}
 
 void font_init() {
     //const char *font_files = "SourceHanSans-Regular-04.ttf";
-	const char *font_files = _("/usr/share/fonts/dejavu/DejaVuSansMono.ttf");
+    //const char *font_files = "";
+    const char *font_files = "Zpix.ttf";
     int pos = 0;
     if (ttf_font) delete ttf_font;
     ttf_font = new TTF::Font(12, 0, screen);
@@ -1484,7 +1467,7 @@ int main (int argc, char **argv)
 	const char *cdrfilename = GetIsoFile();
 
 	filename[0] = '\0'; /* Executable file name */
-	i18n.init();
+
 	setup_paths();
 
 	// PCSX
@@ -1629,18 +1612,6 @@ int main (int argc, char **argv)
 
 	// Load default config from file.
 	config_load(NULL);
-	if (Config.Language[0]) {
-		const auto &l = i18n.getList();
-		for (size_t i = 0; i < l.size(); ++i) {
-			if (l[i].locale == Config.Language) {
-				language_index = (int)i;
-				break;
-			}
-		}
-		if (language_index)
-			i18n.apply(Config.Language);
-	}
-
 	// Check if LastDir exists.
 	probe_lastdir();
 

@@ -121,7 +121,6 @@ enum {
 };
 
 typedef struct {
-	char Language[16];
 	char Bios[MAXPATHLEN];
 	char BiosDir[MAXPATHLEN];
 	char LastDir[MAXPATHLEN];

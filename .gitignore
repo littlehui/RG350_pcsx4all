@@ -12,3 +12,4 @@ stdout.txt
 *.sh
 *.bat
 err.txt
+.idea
