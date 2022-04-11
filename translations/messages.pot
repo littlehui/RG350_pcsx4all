@@ -1,0 +1,172 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR pcsx4all Team
+# This file is distributed under the same license as the pcsx4all package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: pcsx4all 2.4\n"
+"Report-Msgid-Bugs-To: soarchin@gmail.com\n"
+"POT-Creation-Date: 2022-04-10 00:11+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/port/sdl/frontend.cpp:54
+msgid "on"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:54 src/port/sdl/frontend.cpp:1559
+#: src/port/sdl/frontend.cpp:1902
+msgid "off"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:270
+msgid "error opening directory"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:351
+msgid "LOADING"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:373
+msgid "DIR"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:496
+msgid "SAVING"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:511
+msgid "SAVE FAILED"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:512
+msgid "Out of disk space?"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:560
+msgid "No screenshot"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:561
+msgid "  available  "
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:657
+#, c-format
+msgid "Used  slot %d"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:659
+#, c-format
+msgid "Empty slot %d"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:842
+#, c-format
+msgid "Load slot %d"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:922
+msgid "Multi-CD image detected:"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:931
+#, c-format
+msgid "CD %d"
+msgstr ""
+
+#. print indication of which CD is already inserted
+#: src/port/sdl/frontend.cpp:935
+msgid " (inserted)"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1083
+msgid "Cheats"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1107
+msgid "int"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1107
+msgid "rec"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1187
+msgid "Skip BIOS logos at startup"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1214
+msgid "Analog Stick -> Arrow Keys"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1238
+msgid "Analog Mode"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1245
+#, c-format
+msgid "Digital"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1247
+#, c-format
+msgid "DualAnalog"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1249
+#, c-format
+msgid "DualShock"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1351
+msgid "Parasite Eve 2, Vandal Hearts 1/2 Fix"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1559 src/port/sdl/frontend.cpp:1902
+msgid "auto"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1581
+msgid "hardware"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1581
+msgid "nearest"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1594
+msgid "Nearest filter"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1974
+msgid "none"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1975
+msgid "simple"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1976
+msgid "gaussian"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:1977
+msgid "cubic"
+msgstr ""
+
+#: src/port/sdl/frontend.cpp:2294
+msgid "English"
+msgstr ""
+
+#. const char *font_files = "SourceHanSans-Regular-04.ttf";
+#: src/port/sdl/port.cpp:1404
+msgid "/usr/share/fonts/dejavu/DejaVuSansMono.ttf"
+msgstr ""

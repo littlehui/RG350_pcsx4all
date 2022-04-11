@@ -34,6 +34,13 @@
 #include "gpu/gpu_unai/gpu.h"
 #endif
 
+#include "ttf.h"
+#include "i18n.h"
+
+#include <libintl.h>
+
+#define _(s) gettext(s)
+
 #ifdef RUMBLE
 #include "libShake/include/shake.h"
 
@@ -56,6 +63,7 @@ typedef struct
 
 static joypad_rumble_t joypad_rumble = {0};
 #endif
+
 
 enum {
 	DKEY_SELECT = 0,
@@ -86,6 +94,10 @@ enum {
 #endif
 #endif
 
+static TTF::Font *ttf_font = NULL;
+I18n i18n;
+int language_index = 0;
+
 static SDL_Surface *screen;
 unsigned short *SCREEN;
 int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 480;
@@ -94,6 +106,7 @@ static bool pcsx4all_initted = false;
 static bool emu_running = false;
 
 void update_window_size(int w, int h, bool ntsc_fix);
+void font_init();
 
 #ifdef GCW_ZERO
 
@@ -282,7 +295,9 @@ static void pcsx4all_exit(void)
 	} else {
 		config_save(NULL);
 	}
-
+    if (ttf_font) {
+        delete ttf_font;
+    }
 #ifdef GCW_ZERO
 	/* It is good manners to leave IPU scaling in
 	 * the default state when quitting an application */
@@ -447,7 +462,16 @@ int config_load(const char *diskname)
 			break;
 		}
 
-		if (!strcmp(line, "Xa")) {
+		if (!strcmp(line, "Language")) {
+			int len = strlen(arg);
+			if (len == 0 || len > sizeof(Config.Language) - 1) {
+				continue;
+			}
+			if (arg[len-1] == '\n') {
+				arg[len-1] = '\0';
+			}
+			strcpy(Config.Language, arg);
+		} else if (!strcmp(line, "Xa")) {
 			sscanf(arg, "%d", &value);
 			Config.Xa = value;
 		} else if (!strcmp(line, "Mdec")) {
@@ -656,6 +680,7 @@ int config_save(const char *diskname)
 	}
 
 	fprintf(f, "CONFIG_VERSION %d\n"
+		   "Language %s\n"
 		   "Xa %d\n"
 		   "Mdec %d\n"
 		   "PsxAuto %d\n"
@@ -1083,7 +1108,7 @@ unsigned short pad_read(int num)
 void video_flip(void)
 {
 	if (emu_running && Config.ShowFps) {
-		port_printf(5, 5, pl_data.stats_msg);
+		port_printf_pixel(5, 5, pl_data.stats_msg);
 	}
 
 	if (SDL_MUSTLOCK(screen))
@@ -1374,6 +1399,27 @@ void Rumble_Init() {}
 void trigger_rumble(uint8_t low, uint8_t high) {}
 #endif
 
+void font_init() {
+    //const char *font_files = "SourceHanSans-Regular-04.ttf";
+	const char *font_files = _("/usr/share/fonts/dejavu/DejaVuSansMono.ttf");
+    int pos = 0;
+    if (ttf_font) delete ttf_font;
+    ttf_font = new TTF::Font(12, 0, screen);
+    while (pos >= 0) {
+        char font_filename[MAXPATHLEN];
+        const char *delim = strchr(font_files + pos, '|');
+        if (delim == NULL) {
+            strcpy(font_filename, font_files + pos);
+            pos = -1;
+        } else {
+            strncpy(font_filename, font_files + pos, delim - font_files - pos);
+            font_filename[delim - font_files - pos] = 0;
+            pos = delim - font_files + 1;
+        }
+        ttf_font->add(font_filename);
+    }
+}
+
 void update_window_size(int w, int h, bool ntsc_fix)
 {
 	if (Config.VideoScaling != 0) return;
@@ -1438,7 +1484,7 @@ int main (int argc, char **argv)
 	const char *cdrfilename = GetIsoFile();
 
 	filename[0] = '\0'; /* Executable file name */
-
+	i18n.init();
 	setup_paths();
 
 	// PCSX
@@ -1583,6 +1629,18 @@ int main (int argc, char **argv)
 
 	// Load default config from file.
 	config_load(NULL);
+	if (Config.Language[0]) {
+		const auto &l = i18n.getList();
+		for (size_t i = 0; i < l.size(); ++i) {
+			if (l[i].locale == Config.Language) {
+				language_index = (int)i;
+				break;
+			}
+		}
+		if (language_index)
+			i18n.apply(Config.Language);
+	}
+
 	// Check if LastDir exists.
 	probe_lastdir();
 
@@ -1966,6 +2024,8 @@ int main (int argc, char **argv)
 		update_window_size(320, 240, false);
 	}
 
+    font_init();
+
 	if (argc < 2 || string_is_empty(cdrfilename)) {
 		// Enter frontend main-menu:
 		emu_running = false;
@@ -2061,7 +2121,11 @@ void wait_ticks(unsigned s)
 #endif
 }
 
-void port_printf(int x, int y, const char *text)
+void port_printf(int x, int y, const char *text) {
+    ttf_font ? ttf_font->render(screen, x, y, text) : port_printf_pixel(x, y, text);
+}
+
+void port_printf_pixel(int x, int y, const char *text)
 {
 	static const unsigned char fontdata8x8[] =
 	{

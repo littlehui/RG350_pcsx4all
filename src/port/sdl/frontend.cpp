@@ -34,6 +34,10 @@
 #include "gpu/gpu_unai/gpu.h"
 #endif
 
+#include "i18n.h"
+#include <libintl.h>
+
+#define _(s) gettext(s)
 #ifdef TIME_IN_MSEC
 #define timer_delay(a)	wait_ticks(a)
 #else
@@ -45,6 +49,10 @@ enum  {
 	KEY_START=1<<8,	KEY_SELECT=1<<9,	KEY_L=1<<10,	KEY_R=1<<11,
 	KEY_A=1<<12,	KEY_B=1<<13,		KEY_X=1<<14,	KEY_Y=1<<15,
 };
+
+static const char *onoff_str(int idx) {
+	return idx ? _("on") : _("off");
+}
 
 extern char sstatesdir[PATH_MAX];
 static int saveslot = -1;
@@ -147,8 +155,8 @@ static struct dir_item filereq_dir_items[1024] = { { 0, 0 }, };
 
 #define MENU_X		8
 #define MENU_Y		8
-#define MENU_LS		(MENU_Y + 10)
-#define MENU_HEIGHT	22
+#define MENU_LS		(MENU_Y + 12)
+#define MENU_HEIGHT	17
 
 static inline void ChDir(char *dir)
 {
@@ -259,7 +267,7 @@ char *FileReq(char *dir, const char *ext, char *result)
 		if (num_items == 0) {
 			dirstream = opendir(cwd);
 			if (dirstream == NULL) {
-				port_printf(0, 20, "error opening directory");
+				port_printf(0, 20, _("error opening directory"));
 				return NULL;
 			}
 			// read directory entries
@@ -340,7 +348,7 @@ char *FileReq(char *dir, const char *ext, char *result)
 					strcpy(dir, cwd);
 
 				video_clear();
-				port_printf(16 * 8, 120, "LOADING");
+				port_printf(16 * 8, 120, _("LOADING"));
 				video_flip();
 
 				FREE_LIST();
@@ -358,11 +366,11 @@ char *FileReq(char *dir, const char *ext, char *result)
 		while (row < num_items && row < MENU_HEIGHT) {
 			if (row == (cursor_pos - first_visible)) {
 				// draw cursor
-				port_printf(MENU_X + 16, MENU_LS + (10 * row), "-->");
+				port_printf(MENU_X + 16, MENU_LS + (12 * row), "-->");
 			}
 
 			if (filereq_dir_items[row + first_visible].type == 0)
-				port_printf(MENU_X, MENU_LS + (10 * row), "DIR");
+				port_printf(MENU_X, MENU_LS + (12 * row), _("DIR"));
 			int len = strlen(filereq_dir_items[row + first_visible].name);
 			if (len > 32) {
 				snprintf(tmp_string, 16, "%s", filereq_dir_items[row + first_visible].name);
@@ -370,7 +378,7 @@ char *FileReq(char *dir, const char *ext, char *result)
 				strcat(tmp_string, &filereq_dir_items[row + first_visible].name[len - 15]);
 			} else
 			snprintf(tmp_string, 33, "%s", filereq_dir_items[row + first_visible].name);
-			port_printf(MENU_X + (8 * 5), MENU_LS + (10 * row), tmp_string);
+			port_printf(MENU_X + (8 * 5), MENU_LS + (12 * row), tmp_string);
 			row++;
 		}
 		while (row < MENU_HEIGHT)
@@ -402,7 +410,7 @@ typedef struct {
 typedef struct {
 	int num;
 	int cur;
-	int x, y;
+	int x, valx, y;
 	MENUITEM *m; // array of items
 	int page_num, cur_top;
 } MENU;
@@ -431,26 +439,26 @@ static int gui_Credits()
 
 		// diplay menu
 		port_printf(15 * 8 + 4, 10, "CREDITS:");
-		port_printf( 2 * 8, 30, "pcsx team, pcsx-df team, pcsx-r team");
+		port_printf( 2 * 8, 24, "pcsx team, pcsx-df team, pcsx-r team");
 
-		port_printf( 6 * 8, 50, "Franxis and Chui - PCSX4ALL");
+		port_printf( 6 * 8, 38, "Franxis and Chui - PCSX4ALL");
 		port_printf( 4 * 8, 60, "Unai - fast PCSX4ALL GPU plugin");
 
-		port_printf( 5 * 8, 80, "Ulrich Hecht - psx4all-dingoo");
+		port_printf( 5 * 8, 78, "Ulrich Hecht - psx4all-dingoo");
 
 		port_printf(10 * 8, 90, "notaz - PCSX-ReArmed");
 
-		port_printf( 0 * 8, 110, "Dmitry Smagin - porting and optimizing");
+		port_printf( 0 * 8, 108, "Dmitry Smagin - porting and optimizing");
 		port_printf( 0 * 8, 120, "                of mips recompiler,");
-		port_printf( 0 * 8, 130, "                gui coding");
+		port_printf( 0 * 8, 132, "                gui coding");
 
-		port_printf( 0 * 8, 150, "senquack - fixing polygons in gpu_unai,");
+		port_printf( 0 * 8, 148, "senquack - fixing polygons in gpu_unai,");
 		port_printf( 0 * 8, 160, "           porting spu and other stuff");
-		port_printf( 0 * 8, 170, "           from pcsx_rearmed and pcsx-r,");
-		port_printf( 0 * 8, 180, "           many fixes and improvements");
+		port_printf( 0 * 8, 172, "           from pcsx_rearmed and pcsx-r,");
+		port_printf( 0 * 8, 184, "           many fixes and improvements");
 
-		port_printf( 0 * 8, 195, "JohnnyonFlame   - gpu_unai dithering");
-		port_printf( 0 * 8, 205, "                  and other fixes");
+		port_printf( 0 * 8, 196, "JohnnyonFlame   - gpu_unai dithering");
+		port_printf( 0 * 8, 208, "                  and other fixes");
 
 		port_printf( 0 * 8, 220, "zear         - gui fixing and testing");
 
@@ -472,7 +480,7 @@ static MENUITEM gui_MainMenuItems[] = {
 };
 
 #define MENU_SIZE ((sizeof(gui_MainMenuItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_MainMenu = { MENU_SIZE, 0, 102, 140, (MENUITEM *)&gui_MainMenuItems };
+static MENU gui_MainMenu = { MENU_SIZE, 0, 102, 180, 130, (MENUITEM *)&gui_MainMenuItems };
 
 static int gui_state_save(int slot)
 {
@@ -485,7 +493,7 @@ static int gui_state_save(int slot)
 	saveslot = slot;
 
 	video_clear();
-	port_printf(160-(6*8/2), 120-(8/2), "SAVING");
+	port_printf(160-(6*8/2), 120-(8/2), _("SAVING"));
 	video_flip();
 
 	if (state_save(slot) < 0) {
@@ -500,8 +508,8 @@ static int gui_state_save(int slot)
 				return 0;
 			}
 
-			port_printf(160-(11*8/2), 120-12, "SAVE FAILED");
-			port_printf(160-(18*8/2), 120+12, "Out of disk space?");
+			port_printf(160-(11*8/2), 120-12, _("SAVE FAILED"));
+			port_printf(160-(18*8/2), 120+12, _("Out of disk space?"));
 			video_flip();
 			timer_delay(75);
 		}
@@ -549,8 +557,8 @@ static void show_screenshot()
 			dst += SCREEN_WIDTH;
 		}
 	} else {
-		port_printf(320-135, 125 - 10, "No screenshot");
-		port_printf(320-135, 125,      "  available  ");
+		port_printf(320-135, 125 - 12, _("No screenshot"));
+		port_printf(320-135, 125,      _("  available  "));
 	}
 }
 
@@ -635,15 +643,7 @@ GUI_STATE_SAVE_HINT(9)
 // In-game savestate save sub-menu, called from GameMenu() menu
 static int gui_StateSave()
 {
-	const char* str_slot[10];
-	const char* str_slot_unused[10] = {
-		"Empty slot 0", "Empty slot 1", "Empty slot 2", "Empty slot 3", "Empty slot 4",
-		"Empty slot 5", "Empty slot 6", "Empty slot 7", "Empty slot 8", "Empty slot 9",
-	};
-	const char* str_slot_used[10] = {
-		"Used  slot 0", "Used  slot 1", "Used  slot 2", "Used  slot 3", "Used  slot 4",
-		"Used  slot 5", "Used  slot 6", "Used  slot 7", "Used  slot 8", "Used  slot 9",
-	};
+	char str_slot[10][32];
 
 	// Restore last accessed position
 	int initial_pos = saveslot;
@@ -654,9 +654,9 @@ static int gui_StateSave()
 		char savename[512];
 		sprintf(savename, "%s/%s.%d.sav", sstatesdir, CdromId, i);
 		if (FileExists(savename)) {
-			str_slot[i] = str_slot_used[i];
+			sprintf(str_slot[i], _("Used  slot %d"), i);
 		} else {
-			str_slot[i] = str_slot_unused[i];
+			sprintf(str_slot[i], _("Empty slot %d"), i);
 			// Initial position points to a file that doesn't exist?
 			if (initial_pos == i)
 				initial_pos = -1;
@@ -664,16 +664,16 @@ static int gui_StateSave()
 	}
 
 	MENUITEM gui_StateSaveItems[] = {
-		{(char *)str_slot[0], &gui_state_save0, NULL, NULL, &gui_state_save_hint0},
-		{(char *)str_slot[1], &gui_state_save1, NULL, NULL, &gui_state_save_hint1},
-		{(char *)str_slot[2], &gui_state_save2, NULL, NULL, &gui_state_save_hint2},
-		{(char *)str_slot[3], &gui_state_save3, NULL, NULL, &gui_state_save_hint3},
-		{(char *)str_slot[4], &gui_state_save4, NULL, NULL, &gui_state_save_hint4},
-		{(char *)str_slot[5], &gui_state_save5, NULL, NULL, &gui_state_save_hint5},
-		{(char *)str_slot[6], &gui_state_save6, NULL, NULL, &gui_state_save_hint6},
-		{(char *)str_slot[7], &gui_state_save7, NULL, NULL, &gui_state_save_hint7},
-		{(char *)str_slot[8], &gui_state_save8, NULL, NULL, &gui_state_save_hint8},
-		{(char *)str_slot[9], &gui_state_save9, NULL, NULL, &gui_state_save_hint9},
+		{str_slot[0], &gui_state_save0, NULL, NULL, &gui_state_save_hint0},
+		{str_slot[1], &gui_state_save1, NULL, NULL, &gui_state_save_hint1},
+		{str_slot[2], &gui_state_save2, NULL, NULL, &gui_state_save_hint2},
+		{str_slot[3], &gui_state_save3, NULL, NULL, &gui_state_save_hint3},
+		{str_slot[4], &gui_state_save4, NULL, NULL, &gui_state_save_hint4},
+		{str_slot[5], &gui_state_save5, NULL, NULL, &gui_state_save_hint5},
+		{str_slot[6], &gui_state_save6, NULL, NULL, &gui_state_save_hint6},
+		{str_slot[7], &gui_state_save7, NULL, NULL, &gui_state_save_hint7},
+		{str_slot[8], &gui_state_save8, NULL, NULL, &gui_state_save_hint8},
+		{str_slot[9], &gui_state_save9, NULL, NULL, &gui_state_save_hint9},
 		{0}
 	};
 
@@ -683,7 +683,7 @@ static int gui_StateSave()
 	if (initial_pos < 0)
 		initial_pos = 0;
 
-	MENU gui_StateSaveMenu = { menu_size, initial_pos, 30, 80, (MENUITEM *)&gui_StateSaveItems };
+	MENU gui_StateSaveMenu = { menu_size, initial_pos, 30, 0, 80, (MENUITEM *)&gui_StateSaveItems };
 
 	int ret = gui_RunMenu(&gui_StateSaveMenu);
 
@@ -818,10 +818,7 @@ GUI_STATE_LOAD_HINT(9)
 // In-game savestate load sub-menu, called from GameMenu() menu
 static int gui_StateLoad()
 {
-	const char* str_slot[10] = {
-		"Load slot 0", "Load slot 1", "Load slot 2", "Load slot 3", "Load slot 4",
-		"Load slot 5", "Load slot 6", "Load slot 7", "Load slot 8", "Load slot 9",
-	};
+	char str_slot[10][32];
 
 	// Restore last accessed position
 	int initial_pos = saveslot;
@@ -842,8 +839,9 @@ static int gui_StateLoad()
 					newest_mtime = mtime;
 				}
 			}
+			sprintf(str_slot[i], _("Load slot %d"), i);
 		} else {
-			str_slot[i] = NULL;
+			str_slot[i][0] = 0;
 			// Initial position points to a file that doesn't exist?
 			if (initial_pos == i)
 				initial_pos = -1;
@@ -856,16 +854,16 @@ static int gui_StateLoad()
 		initial_pos = newest_file_pos;
 
 	MENUITEM gui_StateLoadItems[] = {
-		{(char *)str_slot[0], &gui_state_load0, NULL, NULL, &gui_state_load_hint0},
-		{(char *)str_slot[1], &gui_state_load1, NULL, NULL, &gui_state_load_hint1},
-		{(char *)str_slot[2], &gui_state_load2, NULL, NULL, &gui_state_load_hint2},
-		{(char *)str_slot[3], &gui_state_load3, NULL, NULL, &gui_state_load_hint3},
-		{(char *)str_slot[4], &gui_state_load4, NULL, NULL, &gui_state_load_hint4},
-		{(char *)str_slot[5], &gui_state_load5, NULL, NULL, &gui_state_load_hint5},
-		{(char *)str_slot[6], &gui_state_load6, NULL, NULL, &gui_state_load_hint6},
-		{(char *)str_slot[7], &gui_state_load7, NULL, NULL, &gui_state_load_hint7},
-		{(char *)str_slot[8], &gui_state_load8, NULL, NULL, &gui_state_load_hint8},
-		{(char *)str_slot[9], &gui_state_load9, NULL, NULL, &gui_state_load_hint9},
+		{str_slot[0], &gui_state_load0, NULL, NULL, &gui_state_load_hint0},
+		{str_slot[1], &gui_state_load1, NULL, NULL, &gui_state_load_hint1},
+		{str_slot[2], &gui_state_load2, NULL, NULL, &gui_state_load_hint2},
+		{str_slot[3], &gui_state_load3, NULL, NULL, &gui_state_load_hint3},
+		{str_slot[4], &gui_state_load4, NULL, NULL, &gui_state_load_hint4},
+		{str_slot[5], &gui_state_load5, NULL, NULL, &gui_state_load_hint5},
+		{str_slot[6], &gui_state_load6, NULL, NULL, &gui_state_load_hint6},
+		{str_slot[7], &gui_state_load7, NULL, NULL, &gui_state_load_hint7},
+		{str_slot[8], &gui_state_load8, NULL, NULL, &gui_state_load_hint8},
+		{str_slot[9], &gui_state_load9, NULL, NULL, &gui_state_load_hint9},
 		{0}
 	};
 
@@ -875,7 +873,7 @@ static int gui_StateLoad()
 	if (initial_pos < 0)
 		return 0;
 
-	MENU gui_StateLoadMenu = { menu_size, initial_pos, 30, 80, (MENUITEM *)&gui_StateLoadItems };
+	MENU gui_StateLoadMenu = { menu_size, initial_pos, 30, 0, 80, (MENUITEM *)&gui_StateLoadItems };
 
 	int ret = gui_RunMenu(&gui_StateLoadMenu);
 
@@ -921,23 +919,23 @@ static int gui_select_multicd(bool swapping_cd)
 		}
 
 		if (!swapping_cd)
-			port_printf(MENU_X, MENU_Y, "Multi-CD image detected:");
+			port_printf(MENU_X, MENU_Y, _("Multi-CD image detected:"));
 
 		char tmp_string[41];
 		for (int row=0; row < num_rows; ++row) {
 			if (row == cursor_pos) {
 				// draw cursor
-				port_printf(MENU_X + 16, MENU_LS + 10 + (10 * row), "-->");
+				port_printf(MENU_X + 16, MENU_LS + 12 + (12 * row), "-->");
 			}
 
-			sprintf(tmp_string, "CD %d", (row+1));
+			sprintf(tmp_string, _("CD %d"), (row+1));
 
 			if (swapping_cd && (row == cdrIsoMultidiskSelect)) {
 				// print indication of which CD is already inserted
-				strcat(tmp_string, " (inserted)");
+				strcat(tmp_string, _(" (inserted)"));
 			}
 
-			port_printf(MENU_X + (8 * 5), MENU_LS + 10 + (10 * row), tmp_string);
+			port_printf(MENU_X + (8 * 5), MENU_LS + 12 + (12 * row), tmp_string);
 		}
 
 		if (keys & KEY_DOWN) { //down
@@ -1059,7 +1057,7 @@ static char *gui_save_config_override_show(void)
 }
 
 static void gui_save_config_override_hint(void) {
-	port_printf(4 * 8, 10 * 8, "Save settings for current disk");
+	port_printf(4 * 8, 10 * 7, "Save settings for current disk");
 }
 
 static MENUITEM gui_GameMenuItems[] =
@@ -1082,7 +1080,7 @@ static MENUITEM gui_GameMenuItems_WithCheats[] =
   {(char *)"GPU settings", &gui_GPUSettings, NULL, NULL, NULL},
   {(char *)"SPU settings", &gui_SPUSettings, NULL, NULL, NULL},
   {(char *)"Core settings", &gui_Settings, NULL, NULL, NULL},
-  {(char *)"Cheats", &gui_Cheats, NULL, NULL, NULL},
+  {(char *)_("Cheats"), &gui_Cheats, NULL, NULL, NULL},
   {(char *)"Config Override", &gui_save_config_override, NULL, &gui_save_config_override_show, &gui_save_config_override_hint},
   {(char *)"Quit", &gui_Quit, NULL, NULL, NULL},
   {0}
@@ -1090,7 +1088,7 @@ static MENUITEM gui_GameMenuItems_WithCheats[] =
 
 #define GMENU_SIZE ((sizeof(gui_GameMenuItems) / sizeof(MENUITEM)) - 1)
 #define GMENUWC_SIZE ((sizeof(gui_GameMenuItems_WithCheats) / sizeof(MENUITEM)) - 1)
-static MENU gui_GameMenu = { GMENU_SIZE, 0, 102, 120, (MENUITEM *)&gui_GameMenuItems };
+static MENU gui_GameMenu = { GMENU_SIZE, 0, 102, 180, 116, (MENUITEM *)&gui_GameMenuItems };
 
 #ifdef PSXREC
 static int emu_alter(u32 keys)
@@ -1106,9 +1104,7 @@ static int emu_alter(u32 keys)
 
 static char *emu_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.Cpu ? "int" : "rec");
-	return buf;
+	return Config.Cpu ? _("int") : _("rec");
 }
 
 extern u32 cycle_multiplier; // in mips/recompiler.cpp
@@ -1145,9 +1141,7 @@ static int bios_alter(u32 keys)
 
 static char *bios_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.HLE ? "on" : "off");
-	return buf;
+	return onoff_str(!!Config.HLE);
 }
 
 static int bios_set()
@@ -1172,16 +1166,25 @@ static char *bios_file_show()
 	return (char*)bios_file_get();
 }
 
-static char *SlowBoot_show()
+static int RCntFix_alter(u32 keys)
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.SlowBoot ? "off" : "on");
-	return buf;
+	if (keys & KEY_RIGHT) {
+		if (Config.RCntFix < 1) Config.RCntFix = 1;
+	} else if (keys & KEY_LEFT) {
+		if (Config.RCntFix > 0) Config.RCntFix = 0;
+	}
+
+	return 0;
+}
+
+static const char *SlowBoot_show()
+{
+	return onoff_str(!Config.SlowBoot);
 }
 
 static void SlowBoot_hint()
 {
-	port_printf(6 * 8, 10 * 6, "Skip BIOS logos at startup");
+	port_printf(7 * 8, 10 * 5, _("Skip BIOS logos at startup"));
 }
 
 static int SlowBoot_alter(u32 keys)
@@ -1208,23 +1211,23 @@ static int AnalogArrow_alter(u32 keys)
 
 static void AnalogArrow_hint()
 {
-	port_printf(6 * 8, 10 * 6, "Analog Stick -> Arrow Keys");
+	port_printf(6 * 8, 10 * 5, _("Analog Stick -> Arrow Keys"));
 }
 
 static char* AnalogArrow_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.AnalogArrow ? "on" : "off");
-	return buf;
+	return onoff_str(!!Config.AnalogArrow);
 }
 
 extern void Set_Controller_Mode();
 static int Analog_Mode_alter(u32 keys)
 {
 	if (keys & KEY_RIGHT) {
-		if (Config.AnalogMode < 3) Config.AnalogMode++;
+		Config.AnalogMode++;
+		if (Config.AnalogMode > 3) Config.AnalogMode = 3;
 	} else if (keys & KEY_LEFT) {
-		if (Config.AnalogMode > 0) Config.AnalogMode--;
+		Config.AnalogMode--;
+		if (Config.AnalogMode < 1) Config.AnalogMode = 0;
 	}
 	Set_Controller_Mode();
 	return 0;
@@ -1232,18 +1235,18 @@ static int Analog_Mode_alter(u32 keys)
 
 static void Analog_Mode_hint()
 {
-	port_printf(6 * 8, 10 * 6, "Analog Mode");
+	port_printf(6 * 8, 10 * 5, _("Analog Mode"));
 }
 
 static char* Analog_Mode_show()
 {
 	static char buf[16] = "\0";
 	switch (Config.AnalogMode) {
-	case 0: sprintf(buf, "Digital");
+	case 0: sprintf(buf, _("Digital"));
 		break;
-	case 1: sprintf(buf, "DualAnalog");
+	case 1: sprintf(buf, _("DualAnalog"));
 		break;
-	case 2: sprintf(buf, "DualShock");
+	case 2: sprintf(buf, _("DualShock"));
 		break;
 	case 3: sprintf(buf, "DualShock / A");
 		break;
@@ -1295,7 +1298,7 @@ static int MenuToggleCombo_alter(u32 keys)
 
 static void MenuToggleCombo_hint()
 {
-	port_printf(6 * 8, 10 * 6, "POWER button also opens menu");
+	port_printf(6 * 8, 10 * 5, "POWER button also opens menu");
 }
 
 static char* MenuToggleCombo_show()
@@ -1333,32 +1336,19 @@ static char *AsyncCD_show()
 }
 
 static void AsyncCD_hint() {
-	port_printf(2 * 8, 10 * 6, "Async: Reduce stutter (restart req.)");
+	port_printf(2 * 8, 10 * 5, "Async: Reduce stutter (restart req.)");
 }
 
 #endif
 
-static int RCntFix_alter(u32 keys)
-{
-	if (keys & KEY_RIGHT) {
-		if (Config.RCntFix < 1) Config.RCntFix = 1;
-	} else if (keys & KEY_LEFT) {
-		if (Config.RCntFix > 0) Config.RCntFix = 0;
-	}
-
-	return 0;
-}
-
 static char *RCntFix_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.RCntFix ? "on" : "off");
-	return buf;
+	return onoff_str(!!Config.RCntFix);
 }
 
 static void RCntFix_hint()
 {
-	port_printf(2 * 8 - 4, 10 * 6, "Parasite Eve 2, Vandal Hearts 1/2 Fix");
+	port_printf(2 * 8 - 4, 10 * 5, _("Parasite Eve 2, Vandal Hearts 1/2 Fix"));
 }
 
 static int VSyncWA_alter(u32 keys)
@@ -1374,14 +1364,12 @@ static int VSyncWA_alter(u32 keys)
 
 static void VSyncWA_hint()
 {
-	port_printf(6 * 8, 10 * 6, "InuYasha Sengoku Battle Fix");
+	port_printf(6 * 8, 10 * 5, "InuYasha Sengoku Battle Fix");
 }
 
 static char *VSyncWA_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.VSyncWA ? "on" : "off");
-	return buf;
+	return onoff_str(!!Config.VSyncWA);
 }
 
 static int McdSlot1_alter(u32 keys)
@@ -1389,12 +1377,12 @@ static int McdSlot1_alter(u32 keys)
 	int slot = Config.McdSlot1;
 	if (keys & KEY_RIGHT)
 	{
-		if (++slot > 16) slot = -1;
+		if (++slot > 15) slot = 1;
 	}
 	else
 	if (keys & KEY_LEFT)
 	{
-		if (--slot < -1) slot = 16;
+		if (--slot < 1) slot = 15;
 	}
 	Config.McdSlot1 = slot;
 	update_memcards(1);
@@ -1504,7 +1492,7 @@ static MENUITEM gui_SettingsItems[] = {
 };
 
 #define SET_SIZE ((sizeof(gui_SettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_SettingsMenu = { SET_SIZE, 0, 56, 82, (MENUITEM *)&gui_SettingsItems };
+static MENU gui_SettingsMenu = { SET_SIZE, 0, 56, 220, 60, (MENUITEM *)&gui_SettingsItems };
 
 static int fps_alter(u32 keys)
 {
@@ -1518,9 +1506,7 @@ static int fps_alter(u32 keys)
 
 static char *fps_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.ShowFps == true ? "on" : "off");
-	return buf;
+	return onoff_str(!!Config.ShowFps);
 }
 
 static int framelimit_alter(u32 keys)
@@ -1536,9 +1522,7 @@ static int framelimit_alter(u32 keys)
 
 static char *framelimit_show()
 {
-	int idx = Config.FrameLimit ? 1 : 0;
-	const char* str[] = { "off", "on" };
-	return (char*)str[idx];
+	return onoff_str(!!Config.FrameLimit);
 }
 
 #ifdef USE_GPULIB
@@ -1572,7 +1556,7 @@ static int frameskip_alter(u32 keys)
 
 static char *frameskip_show()
 {
-	const char* str[] = { "auto", "off", "1", "2", "3" };
+	const char* str[] = { _("auto"), _("off"), "1", "2", "3" };
 
 	// Config.FrameSkip val range is -1..3
 	int fs = Config.FrameSkip + 1;
@@ -1594,7 +1578,7 @@ static int videoscaling_alter(u32 keys)
 }
 
 static char *videoscaling_show() {
-	const char* str[] = {"hardware", "software"};
+	const char* str[] = {_("hardware"), _("nearest")};
 	int vs = Config.VideoScaling;
 	if (vs < 0) vs = 0;
 	else if (vs > 1) vs = 1;
@@ -1604,10 +1588,10 @@ static char *videoscaling_show() {
 static void videoscaling_hint() {
 	switch(Config.VideoScaling) {
 	case 0:
-		port_printf(4 * 8, 10 * 8, "Hardware IPU scaling (fast)");
+		port_printf(4 * 8, 70, "Hardware IPU scaling (fast)");
 		break;
 	case 1:
-		port_printf(4 * 8, 10 * 8, "Software nearest-neighbour");
+		port_printf(4 * 8, 70, _("Nearest filter"));
 		break;
 	}
 }
@@ -1639,7 +1623,7 @@ static char *VideoHwKeepAspect_show()
 }
 
 static void VideoHwKeepAspect_hint() {
-	port_printf(4 * 8, 10 * 8, "Keep pixel aspect ratio (hardware)");
+	port_printf(4 * 8, 10 * 7, "Keep pixel aspect ratio (hardware)");
 }
 
 static int VideoHwFilter_alter(u32 keys)
@@ -1675,7 +1659,7 @@ static char *VideoHwFilter_show()
 }
 
 static void VideoHwFilter_hint() {
-	port_printf(4 * 8, 10 * 8, "Image filtering method (hardware)");
+	port_printf(4 * 8, 10 * 7, "Image filtering method (hardware)");
 }
 
 #endif //GCW_ZERO
@@ -1698,9 +1682,7 @@ static int ntsc_fix_alter(u32 keys)
 
 static char *ntsc_fix_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", gpu_unai_config_ext.ntsc_fix ? "on" : "off");
-	return buf;
+	return onoff_str(!!gpu_unai_config_ext.ntsc_fix);
 }
 
 static int interlace_alter(u32 keys)
@@ -1718,9 +1700,7 @@ static int interlace_alter(u32 keys)
 
 static char *interlace_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", gpu_unai_config_ext.ilace_force == true ? "on" : "off");
-	return buf;
+	return onoff_str(!!gpu_unai_config_ext.ilace_force);
 }
 
 static int dithering_alter(u32 keys)
@@ -1738,9 +1718,7 @@ static int dithering_alter(u32 keys)
 
 static char *dithering_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", gpu_unai_config_ext.dithering == true ? "on" : "off");
-	return buf;
+	return onoff_str(!!gpu_unai_config_ext.dithering);
 }
 
 static int lighting_alter(u32 keys)
@@ -1758,9 +1736,7 @@ static int lighting_alter(u32 keys)
 
 static char *lighting_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", gpu_unai_config_ext.lighting == true ? "on" : "off");
-	return buf;
+	return onoff_str(!!gpu_unai_config_ext.lighting);
 }
 
 static int fast_lighting_alter(u32 keys)
@@ -1778,9 +1754,7 @@ static int fast_lighting_alter(u32 keys)
 
 static char *fast_lighting_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", gpu_unai_config_ext.fast_lighting == true ? "on" : "off");
-	return buf;
+	return onoff_str(!!gpu_unai_config_ext.fast_lighting);
 }
 
 static int blending_alter(u32 keys)
@@ -1798,9 +1772,7 @@ static int blending_alter(u32 keys)
 
 static char *blending_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", gpu_unai_config_ext.blending == true ? "on" : "off");
-	return buf;
+	return onoff_str(!!gpu_unai_config_ext.blending);
 }
 
 /*
@@ -1877,7 +1849,7 @@ static MENUITEM gui_GPUSettingsItems[] = {
 };
 
 #define SET_GPUSIZE ((sizeof(gui_GPUSettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_GPUSettingsMenu = { SET_GPUSIZE, 0, 56, 102, (MENUITEM *)&gui_GPUSettingsItems };
+static MENU gui_GPUSettingsMenu = { SET_GPUSIZE, 0, 56, 220, 83, (MENUITEM *)&gui_GPUSettingsItems };
 
 static int xa_alter(u32 keys)
 {
@@ -1892,9 +1864,7 @@ static int xa_alter(u32 keys)
 
 static char *xa_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.Xa ? "off" : "on");
-	return buf;
+	return onoff_str(!Config.Xa);
 }
 
 static int cdda_alter(u32 keys)
@@ -1910,9 +1880,7 @@ static int cdda_alter(u32 keys)
 
 static char *cdda_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.Cdda ? "off" : "on");
-	return buf;
+	return onoff_str(!Config.Cdda);
 }
 
 static int forcedxa_alter(u32 keys)
@@ -1931,7 +1899,7 @@ static char *forcedxa_show()
 	if (Config.ForcedXAUpdates < 0) Config.ForcedXAUpdates = 0;
 	else if (Config.ForcedXAUpdates > 7) Config.ForcedXAUpdates = 7;
 
-	const char* str[] = { "off", "auto", "1", "2", "4", "8", "16", "32" };
+	const char* str[] = { _("off"), _("auto"), "1", "2", "4", "8", "16", "32" };
 	return (char*)str[Config.ForcedXAUpdates];
 }
 
@@ -1948,9 +1916,7 @@ static int syncaudio_alter(u32 keys)
 
 static char *syncaudio_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.SyncAudio ? "on" : "off");
-	return buf;
+	return onoff_str(!!Config.SyncAudio);
 }
 
 static int spuupdatefreq_alter(u32 keys)
@@ -1986,9 +1952,7 @@ static int spuirq_alter(u32 keys)
 
 static char *spuirq_show()
 {
-	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.SpuIrq ? "on" : "off");
-	return buf;
+	return onoff_str(!!Config.SpuIrq);
 }
 
 #ifdef SPU_PCSXREARMED
@@ -2007,10 +1971,10 @@ static char *interpolation_show()
 {
 	static char buf[16] = "\0";
 	switch (spu_config.iUseInterpolation) {
-	case 0: strcpy(buf, "none"); break;
-	case 1: strcpy(buf, "simple"); break;
-	case 2: strcpy(buf, "gaussian"); break;
-	case 3: strcpy(buf, "cubic"); break;
+	case 0: strcpy(buf, _("none")); break;
+	case 1: strcpy(buf, _("simple")); break;
+	case 2: strcpy(buf, _("gaussian")); break;
+	case 3: strcpy(buf, _("cubic")); break;
 	default: buf[0] = '\0'; break;
 	}
 	return buf;
@@ -2029,9 +1993,7 @@ static int reverb_alter(u32 keys)
 
 static char *reverb_show()
 {
-	int val = spu_config.iUseReverb ? 1 : 0;
-	const char* str[] = { "off", "on" };
-	return (char*)str[val];
+	return onoff_str(!!spu_config.iUseReverb);
 }
 
 static int volume_alter(u32 keys)
@@ -2090,7 +2052,7 @@ static MENUITEM gui_SPUSettingsItems[] = {
 };
 
 #define SET_SPUSIZE ((sizeof(gui_SPUSettingsItems) / sizeof(MENUITEM)) - 1)
-static MENU gui_SPUSettingsMenu = { SET_SPUSIZE, 0, 56, 102, (MENUITEM *)&gui_SPUSettingsItems };
+static MENU gui_SPUSettingsMenu = { SET_SPUSIZE, 0, 56, 220, 83, (MENUITEM *)&gui_SPUSettingsItems };
 
 static int gui_LoadIso()
 {
@@ -2131,7 +2093,7 @@ static int gui_SPUSettings()
 	return 0;
 }
 
-static MENU gui_CheatMenu = { 0, 0, 24, 80, NULL, 15 };
+static MENU gui_CheatMenu = { 0, 0, 24, 0, 78, NULL, 13 };
 
 static int cheat_press() {
 	cheat_toggle(gui_CheatMenu.cur);
@@ -2173,16 +2135,13 @@ static int gui_Quit()
 	return 0;
 }
 
-static void ShowMenuItem(int x, int y, MENUITEM *mi)
+static void ShowMenuItem(int x, int valx, int y, MENUITEM *mi)
 {
-	static char string[PATH_MAX];
-
 	if (mi->name) {
+		port_printf(x, y, mi->name);
 		if (mi->showval) {
-			sprintf(string, "%s %s", mi->name, (*mi->showval)());
-			port_printf(x, y, string);
-		} else
-			port_printf(x, y, mi->name);
+			port_printf(valx, y, (*mi->showval)());
+		}
 	}
 }
 
@@ -2196,30 +2155,30 @@ static void ShowMenu(MENU *menu)
 
 	// show menu lines
 	for (int i = 0; i < cnt; i++, mi++) {
-		ShowMenuItem(menu->x, menu->y + i * 10, mi);
+		ShowMenuItem(menu->x, menu->valx, menu->y + i * 12, mi);
 		// show hint if available
 		if (mi->hint && i == cur)
 			mi->hint();
 	}
 
 	// show cursor
-	port_printf(menu->x - 3 * 8, menu->y + cur * 10, "-->");
+	port_printf(menu->x - 3 * 8, menu->y + cur * 12, "-->");
 
 	// general copyrights info
 #if defined(RG350) && !defined(PG2V2)
-	port_printf(8 * 8, 10, "pcsx4all 2.4 for RG350");
+	port_printf(8 * 7, 12, "pcsx4all 2.4 for RG350 Litlehui");
 #elif defined(RG350) && defined(PG2V2)
-	port_printf(8 * 8, 10, "pcsx4all 2.4 for POCKETGO2 v2");
+	port_printf(8 * 8, 12, "pcsx4all 2.4 for POCKETGO2 v2");
 #elif defined(PG2)
-	port_printf(8 * 8, 10, "pcsx4all 2.4 for POCKETGO2");
+	port_printf(8 * 8, 12, "pcsx4all 2.4 for POCKETGO2");
 #else
-	port_printf(8 * 8, 10, "pcsx4all 2.4 for GCW-Zero");
+	port_printf(8 * 8, 12, "pcsx4all 2.4 for GCW-Zero");
 #endif
-	port_printf(4 * 8, 20, "Built on " __DATE__ " at " __TIME__);
+	port_printf(4 * 14, 26, "Built on " __DATE__ " at " __TIME__);
 	if (CdromId[0]) {
 		// add disc id display for confirming cheat filename
-		port_printf(11 * 8, 35, "Disc ID:");
-		port_printf(20 * 8, 35, CdromId);
+		port_printf(100, 40, "Disc ID:");
+		port_printf(160, 40, CdromId);
 	}
 }
 
@@ -2300,6 +2259,39 @@ static int gui_RunMenu(MENU *menu)
 	}
 
 	return 0;
+}
+
+extern I18n i18n;
+extern int language_index;
+extern void font_init();
+
+static int language_alter(u32 keys)
+{
+	if (keys & KEY_LEFT) {
+		const auto &l = i18n.getList();
+		if (--language_index < 0) {
+			language_index = (int)l.size() - 1;
+		}
+		i18n.apply(l[language_index].locale);
+		snprintf(Config.Language, 16, "%s", l[language_index].locale.c_str());
+		font_init();
+	} else if (keys & KEY_RIGHT) {
+		const auto &l = i18n.getList();
+		if (++language_index >= l.size()) {
+			language_index = 0;
+		}
+		i18n.apply(l[language_index].locale);
+		snprintf(Config.Language, 16, "%s", l[language_index].locale.c_str());
+		font_init();
+	}
+	return -1;
+}
+
+static const char *language_show()
+{
+	const auto &l = i18n.getList();
+	if (language_index > 0 && language_index < l.size()) return l[language_index].name.c_str();
+	return _("English");
 }
 
 /* 0 - exit, 1 - game loaded */

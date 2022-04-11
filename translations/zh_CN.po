@@ -1,0 +1,298 @@
+# Chinese translations for pcsx4all package
+# pcsx4all 软件包的简体中文翻译.
+# Copyright (C) 2019 pcsx4all Team
+# This file is distributed under the same license as the pcsx4all package.
+# Soar Qin <soarchin@gmail.com>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pcsx4all 2.4\n"
+"Report-Msgid-Bugs-To: soarchin@gmail.com\n"
+"POT-Creation-Date: 2022-04-09 23:50+0800\n"
+"PO-Revision-Date: 2019-10-30 01:33+0800\n"
+"Last-Translator: Soar Qin <soarchin@gmail.com>\n"
+"Language-Team: Chinese (simplified)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/port/sdl/frontend.cpp:54
+msgid "on"
+msgstr "开"
+
+#: src/port/sdl/frontend.cpp:54 src/port/sdl/frontend.cpp:1559
+#: src/port/sdl/frontend.cpp:1902
+msgid "off"
+msgstr "关"
+
+#: src/port/sdl/frontend.cpp:270
+msgid "error opening directory"
+msgstr "无法打开目录"
+
+#: src/port/sdl/frontend.cpp:351
+msgid "LOADING"
+msgstr "正在加载"
+
+#: src/port/sdl/frontend.cpp:373
+msgid "DIR"
+msgstr "目录"
+
+#: src/port/sdl/frontend.cpp:496
+msgid "SAVING"
+msgstr "正在保存"
+
+#: src/port/sdl/frontend.cpp:511
+msgid "SAVE FAILED"
+msgstr "保存失败"
+
+#: src/port/sdl/frontend.cpp:512
+msgid "Out of disk space?"
+msgstr "磁盘空间不足？"
+
+#: src/port/sdl/frontend.cpp:560
+msgid "No screenshot"
+msgstr "没有"
+
+#: src/port/sdl/frontend.cpp:561
+msgid "  available  "
+msgstr "截图"
+
+#: src/port/sdl/frontend.cpp:657
+#, c-format
+msgid "Used  slot %d"
+msgstr "已用存档位 %d"
+
+#: src/port/sdl/frontend.cpp:659
+#, c-format
+msgid "Empty slot %d"
+msgstr "空闲存档位 %d"
+
+#: src/port/sdl/frontend.cpp:842
+#, c-format
+msgid "Load slot %d"
+msgstr "加载存档 %d"
+
+#: src/port/sdl/frontend.cpp:922
+msgid "Multi-CD image detected:"
+msgstr "检测到多CD镜像:"
+
+#: src/port/sdl/frontend.cpp:931
+#, c-format
+msgid "CD %d"
+msgstr ""
+
+#. print indication of which CD is already inserted
+#: src/port/sdl/frontend.cpp:935
+msgid " (inserted)"
+msgstr " (已插入)"
+
+#: src/port/sdl/frontend.cpp:1083
+msgid "Cheats"
+msgstr "金手指"
+
+#: src/port/sdl/frontend.cpp:1107
+msgid "int"
+msgstr "解释器"
+
+#: src/port/sdl/frontend.cpp:1107
+msgid "rec"
+msgstr "重编译"
+
+#: src/port/sdl/frontend.cpp:1187
+msgid "Skip BIOS logos at startup"
+msgstr "启动游戏时跳过BIOS LOGO"
+
+#: src/port/sdl/frontend.cpp:1214
+msgid "Analog Stick -> Arrow Keys"
+msgstr "摇杆模拟方向键"
+
+#: src/port/sdl/frontend.cpp:1238
+msgid "Analog Mode"
+msgstr "类比模式"
+
+#: src/port/sdl/frontend.cpp:1245
+#, c-format
+msgid "Digital"
+msgstr "数字"
+
+#: src/port/sdl/frontend.cpp:1247
+#, c-format
+msgid "DualAnalog"
+msgstr "双类比摇杆"
+
+#: src/port/sdl/frontend.cpp:1249
+#, c-format
+msgid "DualShock"
+msgstr "双震动摇杆"
+
+#: src/port/sdl/frontend.cpp:1351
+msgid "Parasite Eve 2, Vandal Hearts 1/2 Fix"
+msgstr "寄生前夜2 汪达尔之心1/2修正"
+
+#: src/port/sdl/frontend.cpp:1559 src/port/sdl/frontend.cpp:1902
+msgid "auto"
+msgstr "自动"
+
+#: src/port/sdl/frontend.cpp:1581
+msgid "hardware"
+msgstr "硬件"
+
+#: src/port/sdl/frontend.cpp:1581
+msgid "nearest"
+msgstr "软件最近点"
+
+#: src/port/sdl/frontend.cpp:1594
+msgid "Nearest filter"
+msgstr "使用最近点过滤器"
+
+#: src/port/sdl/frontend.cpp:1974
+msgid "none"
+msgstr "无"
+
+#: src/port/sdl/frontend.cpp:1975
+msgid "simple"
+msgstr "简单"
+
+#: src/port/sdl/frontend.cpp:1976
+msgid "gaussian"
+msgstr "高斯"
+
+#: src/port/sdl/frontend.cpp:1977
+msgid "cubic"
+msgstr "立方"
+
+#: src/port/sdl/frontend.cpp:2294
+msgid "English"
+msgstr "英语"
+
+#. const char *font_files = "SourceHanSans-Regular-04.ttf";
+#: src/port/sdl/port.cpp:1404
+msgid "/usr/share/fonts/dejavu/DejaVuSansMono.ttf"
+msgstr "/usr/share/fonts/dejavu/DejaVuSansMono.ttf|/usr/share/gmenu2x/skins/Default/fonts/SourceHanSans-Regular-04.ttf"
+
+#~ msgid "Hardware, POWER+A to switch aspect"
+#~ msgstr "硬件渲染，电源+A切换全屏比例"
+
+#~ msgid "Emulation core"
+#~ msgstr "模拟核心"
+
+#~ msgid "Cycle multiplier"
+#~ msgstr "时钟周期倍率"
+
+#~ msgid "HLE emulated BIOS"
+#~ msgstr "HLE模拟BIOS"
+
+#~ msgid "Set BIOS file"
+#~ msgstr "设置BIOS文件"
+
+#~ msgid "Skip BIOS logos"
+#~ msgstr "跳过BIOS LOGO"
+
+#~ msgid "Map L-stick to Dpad"
+#~ msgstr "左摇杆映射方向键"
+
+#~ msgid "RCntFix"
+#~ msgstr "RCnt修正"
+
+#~ msgid "VSyncWA"
+#~ msgstr "等待垂直同步"
+
+#~ msgid "Memory card Slot1"
+#~ msgstr "记忆卡槽1"
+
+#~ msgid "Memory card Slot2"
+#~ msgstr "记忆卡槽2"
+
+#~ msgid "Restore defaults"
+#~ msgstr "恢复默认设置"
+
+#~ msgid "Show FPS"
+#~ msgstr "显示 FPS"
+
+#~ msgid "Frame limiter"
+#~ msgstr "帧率限制"
+
+#~ msgid "Frame skip"
+#~ msgstr "跳帧"
+
+#~ msgid "Video Scaling"
+#~ msgstr "输出缩放"
+
+#~ msgid "NTSC Resolution Fix"
+#~ msgstr "NTSC分辨率修正"
+
+#~ msgid "Interlace"
+#~ msgstr "扫描线"
+
+#~ msgid "Dithering"
+#~ msgstr "抖动"
+
+#~ msgid "Lighting"
+#~ msgstr "光照"
+
+#~ msgid "Fast lighting"
+#~ msgstr "快速光照"
+
+#~ msgid "Blending"
+#~ msgstr "混合渲染"
+
+#~ msgid "XA audio"
+#~ msgstr "XA 音频"
+
+#~ msgid "CDDA audio"
+#~ msgstr "CDDA 音频"
+
+#~ msgid "Audio sync"
+#~ msgstr "音频同步"
+
+#~ msgid "SPU updates per frame"
+#~ msgstr "SPU 更新帧率"
+
+#~ msgid "Forced XA updates"
+#~ msgstr "强制 XA 更新"
+
+#~ msgid "IRQ fix"
+#~ msgstr "IRQ 修正"
+
+#~ msgid "Interpolation"
+#~ msgstr "插补"
+
+#~ msgid "Reverb"
+#~ msgstr "混响"
+
+#~ msgid "Master volume"
+#~ msgstr "主音量"
+
+#~ msgid "Disc ID:"
+#~ msgstr "光碟 ID:"
+
+#~ msgid "Load game"
+#~ msgstr "加载游戏"
+
+#~ msgid "Core settings"
+#~ msgstr "内核设置"
+
+#~ msgid "GPU settings"
+#~ msgstr "GPU 设置"
+
+#~ msgid "SPU settings"
+#~ msgstr "SPU 设置"
+
+#~ msgid "Credits"
+#~ msgstr "CREDITS"
+
+#~ msgid "Language"
+#~ msgstr "语言"
+
+#~ msgid "Quit"
+#~ msgstr "退出"
+
+#~ msgid "Swap CD"
+#~ msgstr "切换 CD"
+
+#~ msgid "Load state"
+#~ msgstr "加载自动存档"
+
+#~ msgid "Save state"
+#~ msgstr "保存自动存档"
